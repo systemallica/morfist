@@ -2,7 +2,7 @@ import numpy as np
 import scipy.stats
 
 
-class MixedSplitter(object):
+class MixedSplitter:
     def __init__(self,
                  x,
                  y,
@@ -46,7 +46,7 @@ class MixedSplitter(object):
 
             values = (values[:-1] + values[1:]) / 2
 
-            # random value subsampling
+            # random value sub-sampling
             values = np.random.choice(values, min(2, values.size))
             for v in values:
                 imp = self.__try_split(x, y, f, v)
@@ -62,20 +62,20 @@ class MixedSplitter(object):
         return self.__impurity_split(y, y[l_idx, :], y[r_idx, :])
 
     def __impurity_node(self, y):
-        def impurity_class(y):
-            y = y.astype(int)
-            freq = np.bincount(y) / y.size
+        def impurity_class(y_class):
+            y_class = y_class.astype(int)
+            freq = np.bincount(y_class) / y_class.size
             freq = freq[freq != 0]
             return 0 - np.array([f * np.log2(f) for f in freq]).sum()
 
-        def impurity_reg(y):
-            if np.unique(y).size < 2:
+        def impurity_reg(y_reg):
+            if np.unique(y_reg).size < 2:
                 return 0
 
             n_bins = 100
             freq, _ = np.histogram(y, bins=n_bins, density=True)
             proba = (freq + 1) / (freq.sum() + n_bins)
-            bin_width = (y.max() - y.min()) / n_bins
+            bin_width = (y_reg.max() - y_reg.min()) / n_bins
 
             return 0 - bin_width * (proba * np.log2(proba)).sum()
 
@@ -104,15 +104,13 @@ class MixedSplitter(object):
             gain_right = (n_right / n_parent) * (imp_parent - imp_right)
             gain = gain_left + gain_right
 
-            # imp = (imp_left + imp_right) / imp_parent
-
             if self.choose_split == 'mean':
                 return gain.mean()
             else:
                 return gain.max()
 
 
-class MixedRandomTree(object):
+class MixedRandomTree:
     def __init__(self,
                  max_features='sqrt',
                  min_samples_leaf=5,
@@ -122,6 +120,13 @@ class MixedRandomTree(object):
         self.max_features = max_features
         self.class_targets = class_targets if class_targets else []
         self.choose_split = choose_split
+        self.n_targets = 0
+        self.f = []
+        self.t = []
+        self.v = []
+        self.l = []
+        self.r = []
+        self.n = []
 
     def fit(self, x, y):
         if y.ndim == 1:
@@ -129,12 +134,12 @@ class MixedRandomTree(object):
 
         self.n_targets = y.shape[1]
 
-        self.splitter = MixedSplitter(x,
-                                      y,
-                                      self.max_features,
-                                      self.min_samples_leaf,
-                                      self.choose_split,
-                                      self.class_targets)
+        splitter = MixedSplitter(x,
+                                 y,
+                                 self.max_features,
+                                 self.min_samples_leaf,
+                                 self.choose_split,
+                                 self.class_targets)
 
         split_f = []
         split_t = []
@@ -151,7 +156,7 @@ class MixedRandomTree(object):
             leaf_value.append(self._make_leaf(next_y))
             n_i.append(next_y.shape[0])
 
-            f, t, imp = self.splitter.split(next_x, next_y)
+            f, t, imp = splitter.split(next_x, next_y)
 
             split_f.append(f)
             split_t.append(t)
@@ -191,18 +196,18 @@ class MixedRandomTree(object):
         n_test = x.shape[0]
         pred = np.zeros((n_test, self.n_targets))
 
-        def traverse(x, test_idx, node_idx):
+        def traverse(x_traverse, test_idx, node_idx):
             if test_idx.size < 1:
                 return
 
             if not self.f[node_idx]:
                 pred[test_idx, :] = self.v[node_idx]
             else:
-                l_idx = x[:, self.f[node_idx]] <= self.t[node_idx]
-                r_idx = x[:, self.f[node_idx]] > self.t[node_idx]
+                l_idx = x_traverse[:, self.f[node_idx]] <= self.t[node_idx]
+                r_idx = x_traverse[:, self.f[node_idx]] > self.t[node_idx]
 
-                traverse(x[l_idx, :], test_idx[l_idx], self.l[node_idx])
-                traverse(x[r_idx, :], test_idx[r_idx], self.r[node_idx])
+                traverse(x_traverse[l_idx, :], test_idx[l_idx], self.l[node_idx])
+                traverse(x_traverse[r_idx, :], test_idx[r_idx], self.r[node_idx])
 
         traverse(x, np.arange(n_test), 0)
         return pred
@@ -219,7 +224,7 @@ class MixedRandomTree(object):
         print_l(0, 0)
 
 
-class MixedRandomForest(object):
+class MixedRandomForest:
     def __init__(self,
                  n_estimators=10,
                  max_features='sqrt',
@@ -231,7 +236,11 @@ class MixedRandomForest(object):
         self.max_features = max_features
         self.class_targets = class_targets if class_targets else []
         self.choose_split = choose_split
+        self.n_targets = 0
+        self.class_labels = {}
+        self.estimators = []
 
+    # Fit the model
     def fit(self, x, y):
         self.estimators = []
 
@@ -239,8 +248,7 @@ class MixedRandomForest(object):
             y = y.reshape((y.size, 1))
         self.n_targets = y.shape[1]
 
-        self.class_labels = {}
-        for i in filter(lambda x: x in self.class_targets, range(self.n_targets)):
+        for i in filter(lambda j: j in self.class_targets, range(self.n_targets)):
             self.class_labels[i] = np.unique(y[:, i])
 
         n_train = x.shape[0]
@@ -256,6 +264,7 @@ class MixedRandomForest(object):
             m.fit(x[sample_idx, :], y[sample_idx, :])
             self.estimators.append(m)
 
+    # Predict the class/value of an instance
     def predict(self, x):
         n_test = x.shape[0]
         pred = np.zeros((n_test, self.n_targets, self.n_estimators))
@@ -271,6 +280,7 @@ class MixedRandomForest(object):
 
         return pred_avg
 
+    # Predict the probability of an instance
     def predict_proba(self, x):
         n_test = x.shape[0]
         pred = np.zeros((n_test, self.n_targets, self.n_estimators))

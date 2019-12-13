@@ -315,7 +315,7 @@ def rmse(y, y_hat):
 #     model: model to be validated
 #     x: X values of the data set
 #     y: Y values of the data set
-#     class_targets: classes to bre predicted ????
+#     class_targets: classes to be predicted ????
 #     class_eval: function to evaluate model classification accuracy
 #     reg_eval: function to evaluate model regression accuracy
 #     verbose: used for debug purposes

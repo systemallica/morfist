@@ -319,7 +319,7 @@ def rmse(y, y_hat):
 #     model: model to be validated
 #     x: X values of the data set
 #     y: Y values of the data set
-#     class_targets: classes to be predicted ????
+#     class_targets: features that are part of the classification task
 #     class_eval: function to evaluate model classification accuracy
 #     reg_eval: function to evaluate model regression accuracy
 #     verbose: used for debug purposes
@@ -346,6 +346,8 @@ def cross_validation(model,
 
     y_hat = np.zeros((idx.size, y.shape[1]))
 
+    # Perform the cross-validation
+    # Train and fit the model for different subsets of the data
     for i in range(folds):
         if verbose:
             print('Running fold {} of {} ...'.format(i + 1, folds))
@@ -364,6 +366,7 @@ def cross_validation(model,
         y_hat[test_idx, :] = m.predict(x[test_idx, :])
 
     scores = np.zeros(y.shape[1])
+    # Calculate the classification and regression accuracy of the model
     for i in range(y.shape[1]):
         if i in class_targets:
             scores[i] = class_eval(y[:, i], y_hat[:, i])

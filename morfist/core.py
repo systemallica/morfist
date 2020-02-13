@@ -1,5 +1,6 @@
 import numpy as np
 import scipy.stats
+import copy
 
 
 class MixedSplitter:
@@ -29,8 +30,11 @@ class MixedSplitter:
         if x.shape[0] <= self.min_samples_leaf:
             return None, None, np.inf
 
+        # Best feature
         best_f = None
+        # Best value
         best_v = None
+        # Best impurity
         best_imp = -np.inf
 
         try_features = np.random.choice(
@@ -331,7 +335,6 @@ def cross_validation(model,
                      class_eval=acc,
                      reg_eval=rmse,
                      verbose=False):
-    import copy
 
     class_targets = class_targets if class_targets else []
 

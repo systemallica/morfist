@@ -175,12 +175,13 @@ class MixedRandomTree:
         split_f = []
         split_t = []
         leaf_value = []
-        l_child = []
-        r_child = []
+        left_child = []
+        right_child = []
         n_i = []
 
         split_queue = [(x, y)]
         i = 0
+        # Build the tree until all values are covered
         while len(split_queue) > 0:
             next_x, next_y = split_queue.pop(0)
 
@@ -192,11 +193,11 @@ class MixedRandomTree:
             split_f.append(f)
             split_t.append(t)
             if f:
-                l_child.append(i + len(split_queue) + 1)
-                r_child.append(i + len(split_queue) + 2)
+                left_child.append(i + len(split_queue) + 1)
+                right_child.append(i + len(split_queue) + 2)
             else:
-                l_child.append(None)
-                r_child.append(None)
+                left_child.append(None)
+                right_child.append(None)
 
             if f:
                 l_idx = next_x[:, f] <= t
@@ -210,8 +211,8 @@ class MixedRandomTree:
         self.f = np.array(split_f)
         self.t = np.array(split_t)
         self.v = np.array(leaf_value)
-        self.l = np.array(l_child)
-        self.r = np.array(r_child)
+        self.l = np.array(left_child)
+        self.r = np.array(right_child)
         self.n = np.array(n_i)
 
     def _make_leaf(self, y):

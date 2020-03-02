@@ -293,6 +293,7 @@ class MixedRandomForest:
         self.n_targets = y.shape[1]
 
         # Get the classification labels
+        # It takes the unique labels of the specified classification variables
         for i in filter(lambda j: j in self.classification_targets, range(self.n_targets)):
             self.classification_labels[i] = np.unique(y[:, i])
 
@@ -351,7 +352,7 @@ class MixedRandomForest:
 
 
 # Calculate classification accuracy of model
-def acc(y, y_hat):
+def accuracy(y, y_hat):
     return (y.astype(int) == y_hat.astype(int)).sum() / y.size
 
 
@@ -378,7 +379,7 @@ def cross_validation(model,
                      y,
                      folds=10,
                      classification_targets=None,
-                     classification_eval=acc,
+                     classification_eval=accuracy,
                      reg_eval=rmse,
                      verbose=False):
     classification_targets = classification_targets if classification_targets else []

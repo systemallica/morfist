@@ -50,11 +50,13 @@ mrf = MixedRandomForest(
 
 ### Training the model
 
-- Once the model is initialised, it can be fit like this:
+- Once the model is initialised, it can be fitted like this:
     ```
     mrf.fit(X, y)
     ```
     Where X are the training examples and Y are their respective labels(if they are categorical) or values(if they are numerical)
+
+### Prediction
 
 - The model can be now used to predict new instances.
     - Class/value:

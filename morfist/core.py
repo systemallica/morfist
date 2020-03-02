@@ -142,7 +142,7 @@ class MixedSplitter:
 
 # Build a Random Tree
 # Parameters:
-#   max_features:
+#   max_features: the number of features to consider when looking for the best split
 #   min_samples_leaf: minimum amount of samples in each leaf
 #   choose_split: method used to find the best split
 #   classification_targets: features that are part of the classification task
@@ -264,7 +264,7 @@ class MixedRandomTree:
 # Build the Random Forest model
 # Parameters:
 #   n_estimators: number of trees in the forest
-#   max_features:
+#   max_features: the number of features to consider when looking for the best split
 #   min_samples_leaf: minimum amount of samples in each leaf
 #   choose_split: method used to find the best split
 #   classification_targets: features that are part of the classification task

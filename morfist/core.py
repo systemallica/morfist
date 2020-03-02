@@ -10,11 +10,11 @@ class MixedSplitter:
                  max_features='sqrt',
                  min_samples_leaf=5,
                  choose_split='mean',
-                 class_targets=None):
+                 classification_targets=None):
         self.n_train = x.shape[0]
         self.n_features = x.shape[1]
         self.n_targets = y.shape[1]
-        self.class_targets = class_targets if class_targets else []
+        self.classification_targets = classification_targets if classification_targets else []
         self.max_features = max_features
         self.min_samples_leaf = min_samples_leaf
         self.root_impurity = self.__impurity_node(y)
@@ -81,10 +81,10 @@ class MixedSplitter:
     # Calculate the impurity of a node
     def __impurity_node(self, y):
         # Calculate the impurity value for the classification task
-        def impurity_class(y_class):
+        def impurity_classification(y_classification):
             # FIXME: this is one of the bottlenecks
-            y_class = y_class.astype(int)
-            freq = np.bincount(y_class) / y_class.size
+            y_classification = y_classification.astype(int)
+            freq = np.bincount(y_classification) / y_classification.size
             freq = freq[freq != 0]
             return 0 - np.array([f * np.log2(f) for f in freq]).sum()
 
@@ -106,8 +106,8 @@ class MixedSplitter:
         imp = np.zeros(self.n_targets)
         # Calculate the impurity value for each of the targets(classification or regression)
         for i in range(self.n_targets):
-            if i in self.class_targets:
-                imp[i] = impurity_class(y[:, i]) + delta
+            if i in self.classification_targets:
+                imp[i] = impurity_classification(y[:, i]) + delta
             else:
                 imp[i] = impurity_reg(y[:, i]) + delta
         return imp
@@ -140,16 +140,16 @@ class MixedSplitter:
 #   max_features:
 #   min_samples_leaf: minimum amount of samples in each leaf
 #   choose_split: method used to find the best split
-#   class_targets: features that are part of the classification task
+#   classification_targets: features that are part of the classification task
 class MixedRandomTree:
     def __init__(self,
                  max_features='sqrt',
                  min_samples_leaf=5,
                  choose_split='mean',
-                 class_targets=None):
+                 classification_targets=None):
         self.min_samples_leaf = min_samples_leaf
         self.max_features = max_features
-        self.class_targets = class_targets if class_targets else []
+        self.classification_targets = classification_targets if classification_targets else []
         self.choose_split = choose_split
         self.n_targets = 0
         self.f = []
@@ -170,7 +170,7 @@ class MixedRandomTree:
                                  self.max_features,
                                  self.min_samples_leaf,
                                  self.choose_split,
-                                 self.class_targets)
+                                 self.classification_targets)
 
         split_f = []
         split_t = []
@@ -218,7 +218,7 @@ class MixedRandomTree:
     def _make_leaf(self, y):
         y_ = np.zeros(self.n_targets)
         for i in range(self.n_targets):
-            if i in self.class_targets:
+            if i in self.classification_targets:
                 y_[i] = np.argmax(np.bincount(y[:, i].astype(int)))
             else:
                 y_[i] = y[:, i].mean()
@@ -262,21 +262,21 @@ class MixedRandomTree:
 #   max_features:
 #   min_samples_leaf: minimum amount of samples in each leaf
 #   choose_split: method used to find the best split
-#   class_targets: features that are part of the classification task
+#   classification_targets: features that are part of the classification task
 class MixedRandomForest:
     def __init__(self,
                  n_estimators=10,
                  max_features='sqrt',
                  min_samples_leaf=5,
                  choose_split='mean',
-                 class_targets=None):
+                 classification_targets=None):
         self.n_estimators = n_estimators
         self.min_samples_leaf = min_samples_leaf
         self.max_features = max_features
-        self.class_targets = class_targets if class_targets else []
+        self.classification_targets = classification_targets if classification_targets else []
         self.choose_split = choose_split
         self.n_targets = 0
-        self.class_labels = {}
+        self.classification_labels = {}
         self.estimators = []
 
     # Fit the model
@@ -288,8 +288,8 @@ class MixedRandomForest:
         self.n_targets = y.shape[1]
 
         # Get the classification labels
-        for i in filter(lambda j: j in self.class_targets, range(self.n_targets)):
-            self.class_labels[i] = np.unique(y[:, i])
+        for i in filter(lambda j: j in self.classification_targets, range(self.n_targets)):
+            self.classification_labels[i] = np.unique(y[:, i])
 
         n_train = x.shape[0]
         # Train the random trees that are part of the forest
@@ -297,7 +297,7 @@ class MixedRandomForest:
             m = MixedRandomTree(self.max_features,
                                 self.min_samples_leaf,
                                 self.choose_split,
-                                self.class_targets)
+                                self.classification_targets)
 
             # It is a random forest so the trees are built with random subsets of the data
             sample_idx = np.random.choice(np.arange(n_train),
@@ -317,7 +317,7 @@ class MixedRandomForest:
         pred_avg = np.zeros((n_test, self.n_targets))
         for i in range(self.n_targets):
             # Predict categorical value
-            if i in self.class_targets:
+            if i in self.classification_targets:
                 pred_avg[:, i], _ = scipy.stats.mode(pred[:, i, :].T)
             # Predict numerical value
             else:
@@ -334,10 +334,10 @@ class MixedRandomForest:
 
         pred_avg = np.zeros((n_test, self.n_targets), dtype=object)
         for i in range(self.n_targets):
-            if i in self.class_targets:
+            if i in self.classification_targets:
                 for j in range(n_test):
                     freq = np.bincount(pred[j, i, :].T.astype(int),
-                                       minlength=self.class_labels[i].size)
+                                       minlength=self.classification_labels[i].size)
                     pred_avg[j, i] = freq / self.n_estimators
             else:
                 pred_avg[:, i] = pred[:, i, :].mean(axis=1)
@@ -360,8 +360,8 @@ def rmse(y, y_hat):
 #     model: model to be validated
 #     x: X values of the data set
 #     y: Y values of the data set
-#     class_targets: features that are part of the classification task
-#     class_eval: function to evaluate model classification accuracy
+#     classification_targets: features that are part of the classification task
+#     classification_eval: function to evaluate model classification accuracy
 #     reg_eval: function to evaluate model regression accuracy
 #     verbose: used for debug purposes
 # Returns:
@@ -372,11 +372,11 @@ def cross_validation(model,
                      x,
                      y,
                      folds=10,
-                     class_targets=None,
-                     class_eval=acc,
+                     classification_targets=None,
+                     classification_eval=acc,
                      reg_eval=rmse,
                      verbose=False):
-    class_targets = class_targets if class_targets else []
+    classification_targets = classification_targets if classification_targets else []
 
     idx = np.random.permutation(x.shape[0])
     fold_size = int(idx.size / folds)
@@ -408,8 +408,8 @@ def cross_validation(model,
     scores = np.zeros(y.shape[1])
     # Calculate the classification and regression accuracy of the model
     for i in range(y.shape[1]):
-        if i in class_targets:
-            scores[i] = class_eval(y[:, i], y_hat[:, i])
+        if i in classification_targets:
+            scores[i] = classification_eval(y[:, i], y_hat[:, i])
         else:
             scores[i] = reg_eval(y[:, i], y_hat[:, i])
 

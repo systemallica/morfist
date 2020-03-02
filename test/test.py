@@ -5,6 +5,7 @@ from sklearn.datasets import load_boston, load_breast_cancer
 import numpy as np
 from time import perf_counter
 
+
 # Configuration
 # Number of tress of the random forest
 n_trees = 11
@@ -19,14 +20,14 @@ x_classification, y_classification = load_breast_cancer(return_X_y=True)
 
 
 # Test morfist against scikit-learn for a classification task
-def test_class():
+def test_classification():
     # Fit morfist classification tree
     t1_start = perf_counter()
 
     cls_morfist = MixedRandomForest(
         n_estimators=n_trees,
         min_samples_leaf=1,
-        class_targets=[0]
+        classification_targets=[0]
     )
 
     # Calculate morfist scores using cross-validation
@@ -34,7 +35,7 @@ def test_class():
         cls_morfist,
         x_classification,
         y_classification,
-        class_targets=[0],
+        classification_targets=[0],
         folds=n_folds
     )
     t1_stop = perf_counter()
@@ -110,7 +111,7 @@ def test_mix_1():
     mix_rf = MixedRandomForest(
         n_estimators=n_trees,
         min_samples_leaf=5,
-        class_targets=[1]
+        classification_targets=[1]
     )
 
     mix_scores = cross_validation(
@@ -118,7 +119,7 @@ def test_mix_1():
         x_mix_1,
         y_mix_1,
         folds=n_folds,
-        class_targets=[1]
+        classification_targets=[1]
     )
     t1_stop = perf_counter()
     print("Elapsed time morfist mix:", t1_stop - t1_start)
@@ -135,7 +136,7 @@ def test_mix_2():
     mix_rf = MixedRandomForest(
         n_estimators=n_trees,
         min_samples_leaf=1,
-        class_targets=[0]
+        classification_targets=[0]
     )
 
     mix_scores = cross_validation(
@@ -143,7 +144,7 @@ def test_mix_2():
         x_mix_2,
         y_mix_2,
         folds=n_folds,
-        class_targets=[0]
+        classification_targets=[0]
     )
     print('Mixed output: ')
     print('\ttask 1 (original) (accuracy): {}'.format(mix_scores[0]))
@@ -151,7 +152,7 @@ def test_mix_2():
 
 
 if __name__ == '__main__':
-    test_class()
+    test_classification()
     print('')
     test_reg()
     print('')

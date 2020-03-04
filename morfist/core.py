@@ -3,6 +3,14 @@ import scipy.stats
 import copy
 
 
+# Class in charge of finding the best split at every given moment
+# Parameters:
+#   x: training data
+#   y: target data
+#   max_features: the number of features to consider when looking for the best split
+#   min_samples_leaf: minimum amount of samples in each leaf
+#   choose_split: method used to find the best split
+#   classification_targets: features that are part of the classification task
 class MixedSplitter:
     def __init__(self,
                  x,
@@ -54,10 +62,10 @@ class MixedSplitter:
         # Try each of the selected features and find which of them gives the best split(higher impurity)
         for f in try_features:
             values = np.unique(x[:, f])
-            # We ensure that the value appears at least 1 times (FIXME??)
-            if values.size < 2:
+            # We ensure that the value appears at least 1 times
+            if values.size < 1:
                 continue
-            # TODO: what's going on here
+
             values = (values[:-1] + values[1:]) / 2
 
             # random value sub-sampling

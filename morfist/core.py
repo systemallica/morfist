@@ -73,7 +73,7 @@ class MixedSplitter:
             values = (values[:-1] + values[1:]) / 2
             values = np.random.choice(values, min(2, values.size))
 
-            # Try to split with this specific combination of feature, value and impurity
+            # Try to split with this specific combination of feature and values
             for value in values:
                 impurity = self.__try_split(x, y, feature, value)
                 # If it's better than the previous saved one, save the values
@@ -105,7 +105,7 @@ class MixedSplitter:
             return 0 - np.array([f * np.log2(f) for f in frequency]).sum()
 
         # Calculate the impurity value for the regression task
-        def impurity_reg(y_regression):
+        def impurity_regression(y_regression):
             if np.unique(y_regression).size < 2:
                 return 0
 
@@ -125,7 +125,7 @@ class MixedSplitter:
             if i in self.classification_targets:
                 impurity[i] = impurity_classification(y[:, i]) + delta
             else:
-                impurity[i] = impurity_reg(y[:, i]) + delta
+                impurity[i] = impurity_regression(y[:, i]) + delta
         return impurity
 
     # Calculate the impurity of a split

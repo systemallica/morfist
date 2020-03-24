@@ -1,6 +1,7 @@
 import numpy as np
 import scipy.stats
 import copy
+from fast_histogram import histogram1d
 
 
 # Class in charge of finding the best split at every given moment
@@ -110,8 +111,8 @@ class MixedSplitter:
                 return 0
 
             n_bins = 100
-            # FIXME: this is one the bottlenecks
-            frequency, _ = np.histogram(y, bins=n_bins, density=True)
+            histogram = histogram1d(y, bins=n_bins, range=(y.min(), y.max()))
+            frequency = histogram / len(y)
             probability = (frequency + 1) / (frequency.sum() + n_bins)
             bin_width = (y_regression.max() - y_regression.min()) / n_bins
 

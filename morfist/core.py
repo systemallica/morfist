@@ -2,7 +2,6 @@ import numpy as np
 import scipy.stats
 import copy
 import multiprocessing as mp
-from multiprocessing import Manager
 
 
 # Class in charge of finding the best split at every given moment
@@ -29,6 +28,9 @@ class MixedSplitter:
         self.min_samples_leaf = min_samples_leaf
         self.root_impurity = self.__impurity_node(y)
         self.choose_split = choose_split
+        self.best_feature = None
+        self.best_value = None
+        self.best_impurity = -np.inf
 
     def split(self, x, y):
         # Maximum number of features to try for the best split
@@ -46,8 +48,8 @@ class MixedSplitter:
     def try_split_parallel(self, x, y, feature, value):
         impurity = self.__try_split(x, y, feature, value)
         # If it's better than the previous saved one, save the values
-        if impurity > self.best_impurity.value:
-            self.best_feature.value, self.best_value.value, self.best_impurity.value = feature, value, impurity
+        if impurity > self.best_impurity:
+            self.best_feature, self.best_value, self.best_impurity = feature, value, impurity
 
     def __find_best_split(self, x, y):
         # If there are not enough features in the leaf, stop splitting
@@ -60,12 +62,6 @@ class MixedSplitter:
             self.max_features,
             replace=False
         )
-
-        manager = Manager()
-
-        self.best_feature = manager.Value('i', -1)
-        self.best_value = manager.Value('d', -np.inf)
-        self.best_impurity = manager.Value('d', -np.inf)
 
         # Try each of the selected features and find which of them gives the best split(higher impurity)
         for feature in try_features:
@@ -85,12 +81,12 @@ class MixedSplitter:
 
             # Step 2: `pool.apply`
             # Try to split with this specific combination of feature and values
-            dummy = [pool.apply(self.try_split_parallel, args=(x, y, feature, value)) for value in values]
+            dummy = (pool.apply(self.try_split_parallel, args=(x, y, feature, value)) for value in values)
 
             # Step 3: Don't forget to close
             pool.close()
 
-        return self.best_feature.value, self.best_value.value, self.best_impurity.value
+        return self.best_feature, self.best_value, self.best_impurity
 
     # Try a specific split
     # Parameters
@@ -214,10 +210,6 @@ class MixedRandomTree:
             n_i.append(next_y.shape[0])
 
             feature, value, impurity = splitter.split(next_x, next_y)
-
-            if feature == -1:
-                feature = None
-                value = None
 
             split_features.append(feature)
             split_values.append(value)

@@ -1,6 +1,7 @@
 import numpy as np
 import scipy.stats
 import copy
+import multiprocessing as mp
 
 
 # Class in charge of finding the best split at every given moment
@@ -27,6 +28,9 @@ class MixedSplitter:
         self.min_samples_leaf = min_samples_leaf
         self.root_impurity = self.__impurity_node(y)
         self.choose_split = choose_split
+        self.best_feature = None
+        self.best_value = None
+        self.best_impurity = -np.inf
 
     def split(self, x, y):
         # Maximum number of features to try for the best split
@@ -41,17 +45,16 @@ class MixedSplitter:
 
         return self.__find_best_split(x, y)
 
+    def try_split_parallel(self, x, y, feature, value):
+        impurity = self.__try_split(x, y, feature, value)
+        # If it's better than the previous saved one, save the values
+        if impurity > self.best_impurity:
+            self.best_feature, self.best_value, self.best_impurity = feature, value, impurity
+
     def __find_best_split(self, x, y):
         # If there are not enough features in the leaf, stop splitting
         if x.shape[0] <= self.min_samples_leaf:
             return None, None, np.inf
-
-        # Best feature
-        best_feature = None
-        # Best value
-        best_value = None
-        # Best impurity
-        best_impurity = -np.inf
 
         # Random selection of the features to try for the best split
         try_features = np.random.choice(
@@ -73,14 +76,17 @@ class MixedSplitter:
             values = (values[:-1] + values[1:]) / 2
             values = np.random.choice(values, min(2, values.size))
 
-            # Try to split with this specific combination of feature and values
-            for value in values:
-                impurity = self.__try_split(x, y, feature, value)
-                # If it's better than the previous saved one, save the values
-                if impurity > best_impurity:
-                    best_feature, best_value, best_impurity = feature, value, impurity
+            # Step 1: Init multiprocessing.Pool()
+            pool = mp.Pool(mp.cpu_count())
 
-        return best_feature, best_value, best_impurity
+            # Step 2: `pool.apply`
+            # Try to split with this specific combination of feature and values
+            dummy = (pool.apply(self.try_split_parallel, args=(x, y, feature, value)) for value in values)
+
+            # Step 3: Don't forget to close
+            pool.close()
+
+        return self.best_feature, self.best_value, self.best_impurity
 
     # Try a specific split
     # Parameters
@@ -117,7 +123,6 @@ class MixedSplitter:
 
             return 0 - bin_width * (probability * np.log2(probability)).sum()
 
-        # TODO: what is this delta?
         delta = 0.0001
         impurity = np.zeros(self.n_targets)
         # Calculate the impurity value for each of the targets(classification or regression)

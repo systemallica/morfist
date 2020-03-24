@@ -1,7 +1,6 @@
 import numpy as np
 import scipy.stats
 import copy
-import multiprocessing as mp
 
 
 # Class in charge of finding the best split at every given moment
@@ -26,7 +25,7 @@ class MixedSplitter:
         self.classification_targets = classification_targets if classification_targets else []
         self.max_features = max_features
         self.min_samples_leaf = min_samples_leaf
-        self.root_impurity = self.impurity_node(y)
+        self.root_impurity = self.__impurity_node(y)
         self.choose_split = choose_split
 
     def split(self, x, y):
@@ -96,7 +95,7 @@ class MixedSplitter:
         return self.__impurity_split(y, y[left_idx, :], y[right_idx, :])
 
     # Calculate the impurity of a node
-    def impurity_node(self, y):
+    def __impurity_node(self, y):
         # Calculate the impurity value for the classification task
         def impurity_classification(y_classification):
             # FIXME: this is one of the bottlenecks
@@ -138,19 +137,9 @@ class MixedSplitter:
         if n_left < self.min_samples_leaf or n_right < self.min_samples_leaf:
             return np.inf
         else:
-            data_list = (y_left, y_right, y)
-            # Step 1: Init multiprocessing.Pool()
-            pool = mp.Pool(mp.cpu_count())
-
-            # Step 2: `pool.apply`
-            results = [pool.apply(self.impurity_node, args=[data]) for data in data_list]
-
-            # Step 3: Don't forget to close
-            pool.close()
-
-            impurity_left = results[0][0] / self.root_impurity
-            impurity_right = results[1][0] / self.root_impurity
-            impurity_parent = results[2][0] / self.root_impurity
+            impurity_left = self.__impurity_node(y_left) / self.root_impurity
+            impurity_right = self.__impurity_node(y_right) / self.root_impurity
+            impurity_parent = self.__impurity_node(y) / self.root_impurity
 
             gain_left = (n_left / n_parent) * (impurity_parent - impurity_left)
             gain_right = (n_right / n_parent) * (impurity_parent - impurity_right)

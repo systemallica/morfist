@@ -118,7 +118,6 @@ class MixedSplitter:
 
             return 0 - bin_width * (probability * np.log2(probability)).sum()
 
-        # TODO: what is this delta?
         delta = 0.0001
         impurity = np.zeros(self.n_targets)
         # Calculate the impurity value for each of the targets(classification or regression)

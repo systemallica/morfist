@@ -69,5 +69,4 @@ mrf = MixedRandomForest(
     ```
   
 ## TODO:
-* More documentation
 * Speed up the learning algorithm implementation (morfist is currently **much** slower than the Random Forest implementation available in scikit-learn) 

@@ -4,11 +4,6 @@ import copy
 from numba import njit
 
 
-@njit
-def hist1d(data, bins):
-    return np.histogram(data, bins)[0]
-
-
 # Calculate the impurity value for the classification task
 @njit
 def impurity_classification(y_classification):
@@ -18,6 +13,24 @@ def impurity_classification(y_classification):
     frequency = frequency[frequency != 0]
 
     return 0 - np.array([f * np.log2(f) for f in frequency]).sum()
+
+
+# Calculate the impurity value for the regression task
+@njit
+def impurity_regression(y, y_regression):
+    if np.unique(y_regression).size < 2:
+        return 0
+
+    n_bins = 100
+    bin_width = (y.max() - y.min()) / n_bins
+
+    frequency = np.histogram(y_regression, n_bins)[0]
+    frequency_float = frequency.astype(np.float64)
+    frequency_float = (frequency_float / len(y)) / bin_width
+
+    probability = (frequency_float + 1) / (frequency_float.sum() + n_bins)
+
+    return 0 - bin_width * (probability * np.log2(probability)).sum()
 
 
 # Class in charge of finding the best split at every given moment
@@ -113,22 +126,6 @@ class MixedSplitter:
 
     # Calculate the impurity of a node
     def __impurity_node(self, y):
-
-        # Calculate the impurity value for the regression task
-        def impurity_regression(y_regression):
-            if np.unique(y_regression).size < 2:
-                return 0
-
-            n_bins = 100
-            bin_width = (y.max() - y.min()) / n_bins
-
-            frequency = hist1d(y, bins=n_bins)
-            frequency = (frequency / len(y)) / bin_width
-
-            probability = (frequency + 1) / (frequency.sum() + n_bins)
-
-            return 0 - bin_width * (probability * np.log2(probability)).sum()
-
         delta = 0.0001
         impurity = np.zeros(self.n_targets)
         # Calculate the impurity value for each of the targets(classification or regression)
@@ -136,7 +133,7 @@ class MixedSplitter:
             if i in self.classification_targets:
                 impurity[i] = impurity_classification(y[:, i]) + delta
             else:
-                impurity[i] = impurity_regression(y[:, i]) + delta
+                impurity[i] = impurity_regression(y, y[:, i]) + delta
         return impurity
 
     # Calculate the impurity of a split

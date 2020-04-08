@@ -9,9 +9,15 @@ def hist1d(data, bins):
     return np.histogram(data, bins)[0]
 
 
+# Calculate the impurity value for the classification task
 @njit
-def bincount(data):
-    return np.bincount(data)
+def impurity_classification(y_classification):
+    y_classification = y_classification.astype(np.int32)
+
+    frequency = np.bincount(y_classification) / y_classification.size
+    frequency = frequency[frequency != 0]
+
+    return 0 - np.array([f * np.log2(f) for f in frequency]).sum()
 
 
 # Class in charge of finding the best split at every given moment
@@ -107,15 +113,6 @@ class MixedSplitter:
 
     # Calculate the impurity of a node
     def __impurity_node(self, y):
-        # Calculate the impurity value for the classification task
-        def impurity_classification(y_classification):
-            # FIXME: this is one of the bottlenecks
-            y_classification = y_classification.astype(int)
-
-            frequency = bincount(y_classification) / y_classification.size
-            frequency = frequency[frequency != 0]
-
-            return 0 - np.array([f * np.log2(f) for f in frequency]).sum()
 
         # Calculate the impurity value for the regression task
         def impurity_regression(y_regression):

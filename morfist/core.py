@@ -7,12 +7,13 @@ from numba import njit
 # Calculate the impurity value for the classification task
 @njit
 def impurity_classification(y_classification):
-    y_classification = y_classification.astype(np.int32)
+    frequency = np.bincount(y_classification.astype(np.int16)) / y_classification.size
 
-    frequency = np.bincount(y_classification) / y_classification.size
-    frequency = frequency[frequency != 0]
+    result = 0
+    for f in frequency:
+        result += f * np.log2(f)
 
-    return 0 - np.array([f * np.log2(f) for f in frequency]).sum()
+    return 0 - result
 
 
 # Calculate the impurity value for the regression task

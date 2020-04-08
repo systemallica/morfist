@@ -132,10 +132,11 @@ def test_mix_1():
 def test_mix_2():
     # Create data with data transposed and stacked vertically, X is regression, Y is classification
     x_mix_2, y_mix_2 = x_classification, np.vstack([y_classification, y_classification]).T
+    t2_start = perf_counter()
 
     mix_rf = MixedRandomForest(
         n_estimators=n_trees,
-        min_samples_leaf=1,
+        min_samples_leaf=5,
         classification_targets=[0]
     )
 
@@ -146,6 +147,9 @@ def test_mix_2():
         folds=n_folds,
         classification_targets=[0]
     )
+    t2_stop = perf_counter()
+
+    print("Elapsed time morfist mix 2:", t2_stop - t2_start)
     print('Mixed output: ')
     print('\ttask 1 (original) (accuracy): {}'.format(mix_scores[0]))
     print('\ttask 2 (additional) (rmse): {}'.format(mix_scores[1]))

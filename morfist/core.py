@@ -1,8 +1,17 @@
 import numpy as np
 import scipy.stats
 import copy
+from fast_histogram import histogram1d
 
 
+# Class in charge of finding the best split at every given moment
+# Parameters:
+#   x: training data
+#   y: target data
+#   max_features: the number of features to consider when looking for the best split
+#   min_samples_leaf: minimum amount of samples in each leaf
+#   choose_split: method used to find the best split
+#   classification_targets: features that are part of the classification task
 class MixedSplitter:
     def __init__(self,
                  x,
@@ -34,15 +43,16 @@ class MixedSplitter:
         return self.__find_best_split(x, y)
 
     def __find_best_split(self, x, y):
+        # If there are not enough features in the leaf, stop splitting
         if x.shape[0] <= self.min_samples_leaf:
             return None, None, np.inf
 
         # Best feature
-        best_f = None
+        best_feature = None
         # Best value
-        best_v = None
+        best_value = None
         # Best impurity
-        best_imp = -np.inf
+        best_impurity = -np.inf
 
         # Random selection of the features to try for the best split
         try_features = np.random.choice(
@@ -52,24 +62,26 @@ class MixedSplitter:
         )
 
         # Try each of the selected features and find which of them gives the best split(higher impurity)
-        for f in try_features:
-            values = np.unique(x[:, f])
-            # We ensure that the value appears at least 1 times (FIXME??)
+        for feature in try_features:
+            # Get the unique possible values for this particular feature
+            values = np.unique(x[:, feature])
+
+            # We ensure that there are at least 2 different values
             if values.size < 2:
                 continue
-            # TODO: what's going on here
+
+            # Random value sub-sampling
             values = (values[:-1] + values[1:]) / 2
-
-            # random value sub-sampling
             values = np.random.choice(values, min(2, values.size))
-            # Try to split with this specific combination of feature, value and impurity
-            # If it's better than the previous one, save the values
-            for v in values:
-                imp = self.__try_split(x, y, f, v)
-                if imp > best_imp:
-                    best_f, best_v, best_imp = f, v, imp
 
-        return best_f, best_v, best_imp
+            # Try to split with this specific combination of feature and values
+            for value in values:
+                impurity = self.__try_split(x, y, feature, value)
+                # If it's better than the previous saved one, save the values
+                if impurity > best_impurity:
+                    best_feature, best_value, best_impurity = feature, value, impurity
+
+        return best_feature, best_value, best_impurity
 
     # Try a specific split
     # Parameters
@@ -77,9 +89,9 @@ class MixedSplitter:
     #   y: y data
     #   f: feature
     #   t: value
-    def __try_split(self, x, y, f, t):
-        left_idx = x[:, f] <= t
-        right_idx = x[:, f] > t
+    def __try_split(self, x, y, feature, value):
+        left_idx = x[:, feature] <= value
+        right_idx = x[:, feature] > value
 
         return self.__impurity_split(y, y[left_idx, :], y[right_idx, :])
 
@@ -89,33 +101,32 @@ class MixedSplitter:
         def impurity_classification(y_classification):
             # FIXME: this is one of the bottlenecks
             y_classification = y_classification.astype(int)
-            freq = np.bincount(y_classification) / y_classification.size
-            freq = freq[freq != 0]
-            return 0 - np.array([f * np.log2(f) for f in freq]).sum()
+            frequency = np.bincount(y_classification) / y_classification.size
+            frequency = frequency[frequency != 0]
+            return 0 - np.array([f * np.log2(f) for f in frequency]).sum()
 
         # Calculate the impurity value for the regression task
-        def impurity_reg(y_reg):
-            if np.unique(y_reg).size < 2:
+        def impurity_regression(y_regression):
+            if np.unique(y_regression).size < 2:
                 return 0
 
             n_bins = 100
-            # FIXME: this is one the bottlenecks
-            freq, _ = np.histogram(y, bins=n_bins, density=True)
-            proba = (freq + 1) / (freq.sum() + n_bins)
-            bin_width = (y_reg.max() - y_reg.min()) / n_bins
+            histogram = histogram1d(y, bins=n_bins, range=(y.min(), y.max()))
+            frequency = histogram / len(y)
+            probability = (frequency + 1) / (frequency.sum() + n_bins)
+            bin_width = (y_regression.max() - y_regression.min()) / n_bins
 
-            return 0 - bin_width * (proba * np.log2(proba)).sum()
+            return 0 - bin_width * (probability * np.log2(probability)).sum()
 
-        # TODO: what is this delta?
         delta = 0.0001
-        imp = np.zeros(self.n_targets)
+        impurity = np.zeros(self.n_targets)
         # Calculate the impurity value for each of the targets(classification or regression)
         for i in range(self.n_targets):
             if i in self.classification_targets:
-                imp[i] = impurity_classification(y[:, i]) + delta
+                impurity[i] = impurity_classification(y[:, i]) + delta
             else:
-                imp[i] = impurity_reg(y[:, i]) + delta
-        return imp
+                impurity[i] = impurity_regression(y[:, i]) + delta
+        return impurity
 
     # Calculate the impurity of a split
     def __impurity_split(self, y, y_left, y_right):
@@ -126,12 +137,12 @@ class MixedSplitter:
         if n_left < self.min_samples_leaf or n_right < self.min_samples_leaf:
             return np.inf
         else:
-            imp_left = self.__impurity_node(y_left) / self.root_impurity
-            imp_right = self.__impurity_node(y_right) / self.root_impurity
-            imp_parent = self.__impurity_node(y) / self.root_impurity
+            impurity_left = self.__impurity_node(y_left) / self.root_impurity
+            impurity_right = self.__impurity_node(y_right) / self.root_impurity
+            impurity_parent = self.__impurity_node(y) / self.root_impurity
 
-            gain_left = (n_left / n_parent) * (imp_parent - imp_left)
-            gain_right = (n_right / n_parent) * (imp_parent - imp_right)
+            gain_left = (n_left / n_parent) * (impurity_parent - impurity_left)
+            gain_right = (n_right / n_parent) * (impurity_parent - impurity_right)
             gain = gain_left + gain_right
 
             if self.choose_split == 'mean':
@@ -142,7 +153,7 @@ class MixedSplitter:
 
 # Build a Random Tree
 # Parameters:
-#   max_features:
+#   max_features: the number of features to consider when looking for the best split
 #   min_samples_leaf: minimum amount of samples in each leaf
 #   choose_split: method used to find the best split
 #   classification_targets: features that are part of the classification task
@@ -157,11 +168,11 @@ class MixedRandomTree:
         self.classification_targets = classification_targets if classification_targets else []
         self.choose_split = choose_split
         self.n_targets = 0
-        self.f = []
-        self.t = []
-        self.v = []
-        self.l = []
-        self.r = []
+        self.features = []
+        self.values = []
+        self.leaf_values = []
+        self.left_children = []
+        self.right_children = []
         self.n = []
 
     def fit(self, x, y):
@@ -177,11 +188,11 @@ class MixedRandomTree:
                                  self.choose_split,
                                  self.classification_targets)
 
-        split_f = []
-        split_t = []
-        leaf_value = []
-        left_child = []
-        right_child = []
+        split_features = []
+        split_values = []
+        leaf_values = []
+        left_children = []
+        right_children = []
         n_i = []
 
         split_queue = [(x, y)]
@@ -190,34 +201,34 @@ class MixedRandomTree:
         while len(split_queue) > 0:
             next_x, next_y = split_queue.pop(0)
 
-            leaf_value.append(self._make_leaf(next_y))
+            leaf_values.append(self._make_leaf(next_y))
             n_i.append(next_y.shape[0])
 
-            f, t, imp = splitter.split(next_x, next_y)
+            feature, value, impurity = splitter.split(next_x, next_y)
 
-            split_f.append(f)
-            split_t.append(t)
-            if f:
-                left_child.append(i + len(split_queue) + 1)
-                right_child.append(i + len(split_queue) + 2)
+            split_features.append(feature)
+            split_values.append(value)
+            if feature:
+                left_children.append(i + len(split_queue) + 1)
+                right_children.append(i + len(split_queue) + 2)
             else:
-                left_child.append(None)
-                right_child.append(None)
+                left_children.append(None)
+                right_children.append(None)
 
-            if f:
-                l_idx = next_x[:, f] <= t
-                r_idx = next_x[:, f] > t
+            if feature:
+                l_idx = next_x[:, feature] <= value
+                r_idx = next_x[:, feature] > value
 
                 split_queue.append((next_x[l_idx, :], next_y[l_idx, :]))
                 split_queue.append((next_x[r_idx, :], next_y[r_idx, :]))
 
             i += 1
 
-        self.f = np.array(split_f)
-        self.t = np.array(split_t)
-        self.v = np.array(leaf_value)
-        self.l = np.array(left_child)
-        self.r = np.array(right_child)
+        self.features = np.array(split_features)
+        self.values = np.array(split_values)
+        self.leaf_values = np.array(leaf_values)
+        self.left_children = np.array(left_children)
+        self.right_children = np.array(right_children)
         self.n = np.array(n_i)
 
     def _make_leaf(self, y):
@@ -231,40 +242,40 @@ class MixedRandomTree:
 
     def predict(self, x):
         n_test = x.shape[0]
-        pred = np.zeros((n_test, self.n_targets))
+        prediction = np.zeros((n_test, self.n_targets))
 
         def traverse(x_traverse, test_idx, node_idx):
             if test_idx.size < 1:
                 return
 
-            if not self.f[node_idx]:
-                pred[test_idx, :] = self.v[node_idx]
+            if not self.features[node_idx]:
+                prediction[test_idx, :] = self.leaf_values[node_idx]
             else:
-                l_idx = x_traverse[:, self.f[node_idx]] <= self.t[node_idx]
-                r_idx = x_traverse[:, self.f[node_idx]] > self.t[node_idx]
+                left_idx = x_traverse[:, self.features[node_idx]] <= self.values[node_idx]
+                right_idx = x_traverse[:, self.features[node_idx]] > self.values[node_idx]
 
-                traverse(x_traverse[l_idx, :], test_idx[l_idx], self.l[node_idx])
-                traverse(x_traverse[r_idx, :], test_idx[r_idx], self.r[node_idx])
+                traverse(x_traverse[left_idx, :], test_idx[left_idx], self.left_children[node_idx])
+                traverse(x_traverse[right_idx, :], test_idx[right_idx], self.right_children[node_idx])
 
         traverse(x, np.arange(n_test), 0)
-        return pred
+        return prediction
 
     def print(self):
-        def print_l(level, i):
-            if self.f[i]:
-                print('\t' * level + '[{} <= {}]:'.format(self.f[i], self.t[i]))
-                print_l(level + 1, self.l[i])
-                print_l(level + 1, self.r[i])
+        def print_level(level, i):
+            if self.features[i]:
+                print('\t' * level + '[{} <= {}]:'.format(self.features[i], self.values[i]))
+                print_level(level + 1, self.left_children[i])
+                print_level(level + 1, self.right_children[i])
             else:
-                print('\t' * level + str(self.v[i]) + ' ({})'.format(self.n[i]))
+                print('\t' * level + str(self.leaf_values[i]) + ' ({})'.format(self.n[i]))
 
-        print_l(0, 0)
+        print_level(0, 0)
 
 
 # Build the Random Forest model
 # Parameters:
 #   n_estimators: number of trees in the forest
-#   max_features:
+#   max_features: the number of features to consider when looking for the best split
 #   min_samples_leaf: minimum amount of samples in each leaf
 #   choose_split: method used to find the best split
 #   classification_targets: features that are part of the classification task
@@ -293,6 +304,7 @@ class MixedRandomForest:
         self.n_targets = y.shape[1]
 
         # Get the classification labels
+        # It takes the unique labels of the specified classification variables
         for i in filter(lambda j: j in self.classification_targets, range(self.n_targets)):
             self.classification_labels[i] = np.unique(y[:, i])
 
@@ -351,7 +363,7 @@ class MixedRandomForest:
 
 
 # Calculate classification accuracy of model
-def acc(y, y_hat):
+def accuracy(y, y_hat):
     return (y.astype(int) == y_hat.astype(int)).sum() / y.size
 
 
@@ -378,7 +390,7 @@ def cross_validation(model,
                      y,
                      folds=10,
                      classification_targets=None,
-                     classification_eval=acc,
+                     classification_eval=accuracy,
                      reg_eval=rmse,
                      verbose=False):
     classification_targets = classification_targets if classification_targets else []

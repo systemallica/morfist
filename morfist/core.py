@@ -33,6 +33,22 @@ def impurity_regression(y, y_regression):
     return 0 - bin_width * (probability * np.log2(probability)).sum()
 
 
+@njit
+def unique(x, feature):
+    return np.unique(x[:, feature])
+
+
+@njit
+def get_gain(imp_n_left, imp_n_right, imp_n, imp_root, n_left, n_right, n_parent):
+    impurity_left = imp_n_left / imp_root
+    impurity_right = imp_n_right / imp_root
+    impurity_parent = imp_n / imp_root
+
+    gain_left = (n_left / n_parent) * (impurity_parent - impurity_left)
+    gain_right = (n_right / n_parent) * (impurity_parent - impurity_right)
+    return gain_left + gain_right
+
+
 # Class in charge of finding the best split at every given moment
 # Parameters:
 #   x: training data
@@ -93,7 +109,7 @@ class MixedSplitter:
         # Try each of the selected features and find which of them gives the best split(higher impurity)
         for feature in try_features:
             # Get the unique possible values for this particular feature
-            values = np.unique(x[:, feature])
+            values = unique(x, feature)
 
             # We ensure that there are at least 2 different values
             if values.size < 2:
@@ -138,20 +154,20 @@ class MixedSplitter:
 
     # Calculate the impurity of a split
     def __impurity_split(self, y, y_left, y_right):
-        n_parent = y.shape[0]
         n_left = y_left.shape[0]
         n_right = y_right.shape[0]
-
         if n_left < self.min_samples_leaf or n_right < self.min_samples_leaf:
             return np.inf
         else:
-            impurity_left = self.__impurity_node(y_left) / self.root_impurity
-            impurity_right = self.__impurity_node(y_right) / self.root_impurity
-            impurity_parent = self.__impurity_node(y) / self.root_impurity
+            n_parent = y.shape[0]
 
-            gain_left = (n_left / n_parent) * (impurity_parent - impurity_left)
-            gain_right = (n_right / n_parent) * (impurity_parent - impurity_right)
-            gain = gain_left + gain_right
+            gain = get_gain(self.__impurity_node(y_left),
+                            self.__impurity_node(y_right),
+                            self.__impurity_node(y),
+                            self.root_impurity,
+                            n_left,
+                            n_right,
+                            n_parent)
 
             if self.choose_split == 'mean':
                 return gain.mean()

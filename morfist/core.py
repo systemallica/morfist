@@ -1,7 +1,17 @@
 import numpy as np
 import scipy.stats
 import copy
-from fast_histogram import histogram1d
+from numba import njit
+
+
+@njit
+def hist1d(data, bins):
+    return np.histogram(data, bins)[0]
+
+
+@njit
+def bincount(data):
+    return np.bincount(data)
 
 
 # Class in charge of finding the best split at every given moment
@@ -101,8 +111,10 @@ class MixedSplitter:
         def impurity_classification(y_classification):
             # FIXME: this is one of the bottlenecks
             y_classification = y_classification.astype(int)
-            frequency = np.bincount(y_classification) / y_classification.size
+
+            frequency = bincount(y_classification) / y_classification.size
             frequency = frequency[frequency != 0]
+
             return 0 - np.array([f * np.log2(f) for f in frequency]).sum()
 
         # Calculate the impurity value for the regression task
@@ -111,10 +123,12 @@ class MixedSplitter:
                 return 0
 
             n_bins = 100
-            histogram = histogram1d(y, bins=n_bins, range=(y.min(), y.max()))
-            frequency = histogram / len(y)
+            bin_width = (y.max() - y.min()) / n_bins
+
+            frequency = hist1d(y, bins=n_bins)
+            frequency = (frequency / len(y)) / bin_width
+
             probability = (frequency + 1) / (frequency.sum() + n_bins)
-            bin_width = (y_regression.max() - y_regression.min()) / n_bins
 
             return 0 - bin_width * (probability * np.log2(probability)).sum()
 

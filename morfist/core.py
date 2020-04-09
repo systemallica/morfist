@@ -18,8 +18,8 @@ def impurity_classification(y_classification):
     frequency = frequency[frequency != 0]
 
     result = 0
-    for f in frequency:
-        result += f * np.log2(f)
+    for i in range(frequency.size):
+        result += frequency[i] * np.log2(frequency[i])
 
     return 0 - result
 

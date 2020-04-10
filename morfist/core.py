@@ -125,29 +125,50 @@ class MixedSplitter:
                 continue
 
             # Random value sub-sampling
+            # Reduces the size by one element
+            # This is to avoid using the first value in case it is 0 for regression
+            # [0] -> ([0] + [1]) / 2
             values = (values[:-1] + values[1:]) / 2
+
+            # Choose a random amount of values, with a min of 2
             values = np.random.choice(values, min(2, values.size))
 
             # Try to split with this specific combination of feature and values
+            # Here lies the computational burden, as we try every possible split
+            # TODO incrementally compute impurity
             for value in values:
-                impurity = self.__try_split(x, y, feature, value)
+
+                left_idx = x[:, feature] <= value
+                right_idx = x[:, feature] > value
+
+                impurity = self.__impurity_split(y, y[left_idx, :], y[right_idx, :])
                 # If it's better than the previous saved one, save the values
                 if impurity > best_impurity:
                     best_feature, best_value, best_impurity = feature, value, impurity
 
         return best_feature, best_value, best_impurity
 
-    # Try a specific split
-    # Parameters
-    #   x: x data
-    #   y: y data
-    #   f: feature
-    #   t: value
-    def __try_split(self, x, y, feature, value):
-        left_idx = x[:, feature] <= value
-        right_idx = x[:, feature] > value
+    # Calculate the impurity of a split
+    def __impurity_split(self, y_parent, y_left, y_right):
+        n_left = y_left.shape[0]
+        n_right = y_right.shape[0]
+        if n_left < self.min_samples_leaf or n_right < self.min_samples_leaf:
+            return np.inf
+        else:
+            n_parent = y_parent.shape[0]
 
-        return self.__impurity_split(y, y[left_idx, :], y[right_idx, :])
+            gain = get_gain(self.__impurity_node(y_left),
+                            self.__impurity_node(y_right),
+                            self.__impurity_node(y_parent),
+                            self.root_impurity,
+                            n_left,
+                            n_right,
+                            n_parent)
+
+            if self.choose_split == 'mean':
+                return gain.mean()
+            else:
+                return gain.max()
 
     # Calculate the impurity of a node
     def __impurity_node(self, y):
@@ -160,28 +181,6 @@ class MixedSplitter:
             else:
                 impurity[i] = impurity_regression(y, y[:, i]) + delta
         return impurity
-
-    # Calculate the impurity of a split
-    def __impurity_split(self, y, y_left, y_right):
-        n_left = y_left.shape[0]
-        n_right = y_right.shape[0]
-        if n_left < self.min_samples_leaf or n_right < self.min_samples_leaf:
-            return np.inf
-        else:
-            n_parent = y.shape[0]
-
-            gain = get_gain(self.__impurity_node(y_left),
-                            self.__impurity_node(y_right),
-                            self.__impurity_node(y),
-                            self.root_impurity,
-                            n_left,
-                            n_right,
-                            n_parent)
-
-            if self.choose_split == 'mean':
-                return gain.mean()
-            else:
-                return gain.max()
 
 
 # Build a Random Tree

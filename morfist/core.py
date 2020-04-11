@@ -243,16 +243,15 @@ class MixedRandomTree:
             if feature:
                 left_children.append(i + len(split_queue) + 1)
                 right_children.append(i + len(split_queue) + 2)
-            else:
-                left_children.append(None)
-                right_children.append(None)
 
-            if feature:
                 l_idx = next_x[:, feature] <= value
                 r_idx = next_x[:, feature] > value
 
                 split_queue.append((next_x[l_idx, :], next_y[l_idx, :]))
                 split_queue.append((next_x[r_idx, :], next_y[r_idx, :]))
+            else:
+                left_children.append(None)
+                right_children.append(None)
 
             i += 1
 

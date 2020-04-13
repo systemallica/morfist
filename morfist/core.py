@@ -11,15 +11,12 @@ def impurity_classification(y_classification):
     y_class = y_classification.astype(np.int16)
 
     # Calculate frequencies
-    bincount = np.bincount(y_class)
-    frequency = bincount / y_class.size
-
-    # Remove 0 values
-    frequency = frequency[frequency != 0]
+    frequency = np.bincount(y_class) / y_class.size
 
     result = 0
     for i in range(frequency.size):
-        result += frequency[i] * np.log2(frequency[i])
+        if frequency[i]:
+            result += frequency[i] * np.log2(frequency[i])
 
     return 0 - result
 

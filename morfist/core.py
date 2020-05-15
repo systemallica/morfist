@@ -1,7 +1,58 @@
 import numpy as np
 import scipy.stats
 import copy
-from fast_histogram import histogram1d
+from numba import njit
+
+
+# Calculate the impurity value for the classification task
+@njit
+def impurity_classification(y_classification):
+    # Cast to integer
+    y_class = y_classification.astype(np.int16)
+
+    # Calculate frequencies
+    frequency = np.bincount(y_class) / y_class.size
+
+    result = 0
+    for i in range(frequency.size):
+        if frequency[i]:
+            result += frequency[i] * np.log2(frequency[i])
+
+    return 0 - result
+
+
+# Calculate the impurity value for the regression task
+@njit
+def impurity_regression(y, y_regression):
+    if np.unique(y_regression).size < 2:
+        return 0
+
+    n_bins = 100
+    bin_width = (y.max() - y.min()) / n_bins
+
+    frequency = np.histogram(y_regression, n_bins)[0]
+    frequency_float = frequency.astype(np.float64)
+    frequency_float = (frequency_float / len(y)) / bin_width
+
+    probability = (frequency_float + 1) / (frequency_float.sum() + n_bins)
+
+    return 0 - bin_width * (probability * np.log2(probability)).sum()
+
+
+@njit
+def unique(x, feature):
+    return np.unique(x[:, feature])
+
+
+@njit
+def get_gain(imp_n_left, imp_n_right, imp_n, imp_root, n_left, n_right, n_parent):
+    impurity_left = imp_n_left / imp_root
+    impurity_right = imp_n_right / imp_root
+    impurity_parent = imp_n / imp_root
+
+    gain_left = (n_left / n_parent) * (impurity_parent - impurity_left)
+    gain_right = (n_right / n_parent) * (impurity_parent - impurity_right)
+    return gain_left + gain_right
 
 
 # Class in charge of finding the best split at every given moment
@@ -64,60 +115,60 @@ class MixedSplitter:
         # Try each of the selected features and find which of them gives the best split(higher impurity)
         for feature in try_features:
             # Get the unique possible values for this particular feature
-            values = np.unique(x[:, feature])
+            values = unique(x, feature)
 
             # We ensure that there are at least 2 different values
             if values.size < 2:
                 continue
 
             # Random value sub-sampling
+            # Reduces the size by one element
+            # This is to avoid using the first value in case it is 0 for regression
+            # [0] -> ([0] + [1]) / 2
             values = (values[:-1] + values[1:]) / 2
+
+            # Choose a random amount of values, with a min of 2
             values = np.random.choice(values, min(2, values.size))
 
             # Try to split with this specific combination of feature and values
+            # Here lies the computational burden, as we try every possible split
+            # TODO incrementally compute impurity
             for value in values:
-                impurity = self.__try_split(x, y, feature, value)
+
+                left_idx = x[:, feature] <= value
+                right_idx = x[:, feature] > value
+
+                impurity = self.__impurity_split(y, y[left_idx, :], y[right_idx, :])
                 # If it's better than the previous saved one, save the values
                 if impurity > best_impurity:
                     best_feature, best_value, best_impurity = feature, value, impurity
 
         return best_feature, best_value, best_impurity
 
-    # Try a specific split
-    # Parameters
-    #   x: x data
-    #   y: y data
-    #   f: feature
-    #   t: value
-    def __try_split(self, x, y, feature, value):
-        left_idx = x[:, feature] <= value
-        right_idx = x[:, feature] > value
+    # Calculate the impurity of a split
+    def __impurity_split(self, y_parent, y_left, y_right):
+        n_left = y_left.shape[0]
+        n_right = y_right.shape[0]
+        if n_left < self.min_samples_leaf or n_right < self.min_samples_leaf:
+            return np.inf
+        else:
+            n_parent = y_parent.shape[0]
 
-        return self.__impurity_split(y, y[left_idx, :], y[right_idx, :])
+            gain = get_gain(self.__impurity_node(y_left),
+                            self.__impurity_node(y_right),
+                            self.__impurity_node(y_parent),
+                            self.root_impurity,
+                            n_left,
+                            n_right,
+                            n_parent)
+
+            if self.choose_split == 'mean':
+                return gain.mean()
+            else:
+                return gain.max()
 
     # Calculate the impurity of a node
     def __impurity_node(self, y):
-        # Calculate the impurity value for the classification task
-        def impurity_classification(y_classification):
-            # FIXME: this is one of the bottlenecks
-            y_classification = y_classification.astype(int)
-            frequency = np.bincount(y_classification) / y_classification.size
-            frequency = frequency[frequency != 0]
-            return 0 - np.array([f * np.log2(f) for f in frequency]).sum()
-
-        # Calculate the impurity value for the regression task
-        def impurity_regression(y_regression):
-            if np.unique(y_regression).size < 2:
-                return 0
-
-            n_bins = 100
-            histogram = histogram1d(y, bins=n_bins, range=(y.min(), y.max()))
-            frequency = histogram / len(y)
-            probability = (frequency + 1) / (frequency.sum() + n_bins)
-            bin_width = (y_regression.max() - y_regression.min()) / n_bins
-
-            return 0 - bin_width * (probability * np.log2(probability)).sum()
-
         delta = 0.0001
         impurity = np.zeros(self.n_targets)
         # Calculate the impurity value for each of the targets(classification or regression)
@@ -125,30 +176,8 @@ class MixedSplitter:
             if i in self.classification_targets:
                 impurity[i] = impurity_classification(y[:, i]) + delta
             else:
-                impurity[i] = impurity_regression(y[:, i]) + delta
+                impurity[i] = impurity_regression(y, y[:, i]) + delta
         return impurity
-
-    # Calculate the impurity of a split
-    def __impurity_split(self, y, y_left, y_right):
-        n_parent = y.shape[0]
-        n_left = y_left.shape[0]
-        n_right = y_right.shape[0]
-
-        if n_left < self.min_samples_leaf or n_right < self.min_samples_leaf:
-            return np.inf
-        else:
-            impurity_left = self.__impurity_node(y_left) / self.root_impurity
-            impurity_right = self.__impurity_node(y_right) / self.root_impurity
-            impurity_parent = self.__impurity_node(y) / self.root_impurity
-
-            gain_left = (n_left / n_parent) * (impurity_parent - impurity_left)
-            gain_right = (n_right / n_parent) * (impurity_parent - impurity_right)
-            gain = gain_left + gain_right
-
-            if self.choose_split == 'mean':
-                return gain.mean()
-            else:
-                return gain.max()
 
 
 # Build a Random Tree
@@ -211,16 +240,15 @@ class MixedRandomTree:
             if feature:
                 left_children.append(i + len(split_queue) + 1)
                 right_children.append(i + len(split_queue) + 2)
-            else:
-                left_children.append(None)
-                right_children.append(None)
 
-            if feature:
                 l_idx = next_x[:, feature] <= value
                 r_idx = next_x[:, feature] > value
 
                 split_queue.append((next_x[l_idx, :], next_y[l_idx, :]))
                 split_queue.append((next_x[r_idx, :], next_y[r_idx, :]))
+            else:
+                left_children.append(None)
+                right_children.append(None)
 
             i += 1
 
@@ -280,6 +308,19 @@ class MixedRandomTree:
 #   choose_split: method used to find the best split
 #   classification_targets: features that are part of the classification task
 class MixedRandomForest:
+    def __str__(self):
+        params = "("
+        i = 0
+        for key in self.__dict__:
+            if i == 0:
+                params += str(key) + "=" + str(self.__dict__[key]) + ", \n"
+            elif i == len(self.__dict__) - 1:
+                params += "\t\t\t" + str(key) + "=" + str(self.__dict__[key]) + ")"
+            else:
+                params += "\t\t\t" + str(key) + "=" + str(self.__dict__[key]) + ", \n"
+            i += 1
+        return self.__class__.__name__ + params
+
     def __init__(self,
                  n_estimators=10,
                  max_features='sqrt',

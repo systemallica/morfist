@@ -8,12 +8,24 @@ of classification tasks and regression tasks, simultaneously. Morfist's mixed mu
 * [Breiman, L. (2001). Random forests. Machine learning, 45(1), 5-32](https://link.springer.com/article/10.1023%2FA%3A1010933404324).
 * [Linusson, H. (2013). Multi-output random forests](https://pdfs.semanticscholar.org/4219/f87ed41c558d43cf78f63976cf87bcd7ebb0.pdf).
 
+## Installation
+
+With pip:
+```
+pip install decision-tree-morfist
+```
+With conda:
+```
+conda install -c systemallica decision-tree-morfist
+```
 ## Usage
 
 ### Initialising the model
 
 - Similarly to a scikit-learn [RandomForestClassifier](https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.RandomForestClassifier.html), a MixedRandomForest can be initialised in this way:
 ```
+from morfist import MixedRandomForest
+
 mrf = MixedRandomForest(
     n_estimators=n_trees,
     min_samples_leaf=1,

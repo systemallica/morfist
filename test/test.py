@@ -67,7 +67,7 @@ def test_reg():
     t1_start = perf_counter()
     reg_morfist = MixedRandomForest(
         n_estimators=n_trees,
-        min_samples_leaf=5
+        min_samples_leaf=1
     )
 
     # Calculate morfist scores using cross-validation
@@ -110,7 +110,7 @@ def test_mix_1():
 
     mix_rf = MixedRandomForest(
         n_estimators=n_trees,
-        min_samples_leaf=5,
+        min_samples_leaf=1,
         classification_targets=[1]
     )
 
@@ -136,7 +136,7 @@ def test_mix_2():
 
     mix_rf = MixedRandomForest(
         n_estimators=n_trees,
-        min_samples_leaf=5,
+        min_samples_leaf=1,
         classification_targets=[0]
     )
 

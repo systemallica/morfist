@@ -308,6 +308,19 @@ class MixedRandomTree:
 #   choose_split: method used to find the best split
 #   classification_targets: features that are part of the classification task
 class MixedRandomForest:
+    def __str__(self):
+        params = "("
+        i = 0
+        for key in self.__dict__:
+            if i == 0:
+                params += str(key) + "=" + str(self.__dict__[key]) + ", \n"
+            elif i == len(self.__dict__) - 1:
+                params += "\t\t\t" + str(key) + "=" + str(self.__dict__[key]) + ")"
+            else:
+                params += "\t\t\t" + str(key) + "=" + str(self.__dict__[key]) + ", \n"
+            i += 1
+        return self.__class__.__name__ + params
+
     def __init__(self,
                  n_estimators=10,
                  max_features='sqrt',

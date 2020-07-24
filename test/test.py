@@ -1,10 +1,12 @@
-from morfist import MixedRandomForest, cross_validation
-from sklearn.ensemble import RandomForestRegressor, RandomForestClassifier
-from sklearn.model_selection import cross_val_score
-from sklearn.datasets import load_boston, load_breast_cancer
-import numpy as np
 from time import perf_counter
 
+import numpy as np
+from sklearn.datasets import load_boston, load_breast_cancer
+from sklearn.ensemble import RandomForestRegressor, RandomForestClassifier
+from sklearn.model_selection import cross_val_score
+
+from algo.evaluation  import cross_validation
+from core.MixedRandomForest import MixedRandomForest
 
 # Configuration
 # Number of tress of the random forest

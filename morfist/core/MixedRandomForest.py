@@ -1,7 +1,7 @@
 import numpy as np
 import scipy.stats
 
-from core.MixedRandomTree import MixedRandomTree
+from morfist.core.MixedRandomTree import MixedRandomTree
 
 
 class MixedRandomForest:

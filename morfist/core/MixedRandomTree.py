@@ -1,6 +1,6 @@
 import numpy as np
 
-from core.MixedSplitter import MixedSplitter
+from morfist.core.MixedSplitter import MixedSplitter
 
 
 class MixedRandomTree:

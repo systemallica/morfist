@@ -1,7 +1,7 @@
 import numpy as np
 from numba import njit
 
-from algo import numba_histogram
+from morfist.algo.histogram import numba_histogram
 
 
 @njit

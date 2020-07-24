@@ -5,8 +5,8 @@ from sklearn.datasets import load_boston, load_breast_cancer
 from sklearn.ensemble import RandomForestRegressor, RandomForestClassifier
 from sklearn.model_selection import cross_val_score
 
-from algo.evaluation  import cross_validation
-from core.MixedRandomForest import MixedRandomForest
+from algo.evaluation import cross_validation
+from morfist import MixedRandomForest
 
 # Configuration
 # Number of tress of the random forest

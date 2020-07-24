@@ -1,0 +1,25 @@
+[tool.poetry]
+name = "decision-tree-morfist"
+version = "0.1.1"
+description = "Multi-target Random Forest implementation that can mix both classification and regression tasks."
+authors = ["Henrik Linusson <henrik.linusson@hb.se>", "Andrés Reverón Molina <andres@reveronmolina.me>"]
+license = "MIT"
+repository = "https://github.com/systemallica/morfist"
+readme = "README.md"
+classifiers = [
+        "Topic :: Machine Learning",
+        "Programming Language :: Python :: 3",
+        "Programming Language :: Python :: 3.8",
+]
+
+[tool.poetry.dependencies]
+python = "^3.8.5"
+numba = "^0.50.1"
+numpy = "^1.19.1"
+scipy = "^1.5.2"
+
+[tool.poetry.dev-dependencies]
+scikit-learn = "^0.23.1"
+setuptools = "^49.2.0"
+pytest = "^5.4.3"
+

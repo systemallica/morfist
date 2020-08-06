@@ -9,7 +9,7 @@ def impurity_classification(y_classification):
     # Calculate the impurity value for the classification task
 
     # Cast to integer
-    y_class = y_classification.astype(np.int16)
+    y_class = y_classification.astype(np.int8)
 
     # Calculate frequencies
     frequency = np.bincount(y_class) / y_class.size
@@ -32,7 +32,7 @@ def impurity_regression(y, y_regression):
     n_bins = 100
     bin_width = (y.max() - y.min()) / n_bins
 
-    frequency = numba_histogram(y_regression, n_bins)[0]
+    frequency, _ = numba_histogram(y_regression, n_bins)
     frequency_float = frequency.astype(np.float64)
     frequency_float = (frequency_float / len(y)) / bin_width
 

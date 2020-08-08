@@ -42,11 +42,6 @@ def impurity_regression(y, y_regression):
 
 
 @njit
-def unique(x, feature):
-    return np.unique(x[:, feature])
-
-
-@njit
 def get_gain(imp_n_left, imp_n_right, imp_n, imp_root, n_left, n_right, n_parent):
     impurity_left = imp_n_left / imp_root
     impurity_right = imp_n_right / imp_root
@@ -55,6 +50,21 @@ def get_gain(imp_n_left, imp_n_right, imp_n, imp_root, n_left, n_right, n_parent
     gain_left = (n_left / n_parent) * (impurity_parent - impurity_left)
     gain_right = (n_right / n_parent) * (impurity_parent - impurity_right)
     return gain_left + gain_right
+
+
+def get_max_features(max_features, n_features):
+    n_max_features = n_features
+    # Maximum number of features to try for the best split
+    if max_features == 'sqrt':
+        n_max_features = int(np.sqrt(n_features))
+    elif max_features == 'log2':
+        n_max_features = int(np.log2(n_features))
+    elif isinstance(max_features, float):
+        n_max_features = int(max_features * n_features)
+    elif max_features is None:
+        n_max_features = n_features
+
+    return n_max_features
 
 
 class MixedSplitter:
@@ -78,25 +88,12 @@ class MixedSplitter:
         self.n_features = x.shape[1]
         self.n_targets = y.shape[1]
         self.classification_targets = classification_targets if classification_targets else []
-        self.max_features = max_features
+        self.max_features = get_max_features(max_features, self.n_features)
         self.min_samples_leaf = min_samples_leaf
         self.root_impurity = self.__impurity_node(y)
         self.choose_split = choose_split
 
     def split(self, x, y):
-        # Maximum number of features to try for the best split
-        if self.max_features == 'sqrt':
-            self.max_features = int(np.sqrt(self.n_features))
-        elif self.max_features == 'log2':
-            self.max_features = int(np.log2(self.n_features))
-        elif isinstance(self.max_features, float):
-            self.max_features = int(self.max_features * self.n_features)
-        elif self.max_features is None:
-            self.max_features = self.n_features
-
-        return self.__find_best_split(x, y)
-
-    def __find_best_split(self, x, y):
         # If there are not enough features in the leaf, stop splitting
         if x.shape[0] <= self.min_samples_leaf:
             return None, None, np.inf
@@ -118,7 +115,7 @@ class MixedSplitter:
         # Try each of the selected features and find which of them gives the best split(higher impurity)
         for feature in try_features:
             # Get the unique possible values for this particular feature
-            values = unique(x, feature)
+            values = np.unique(x[:, feature])
 
             # We ensure that there are at least 2 different values
             if values.size < 2:
@@ -170,8 +167,8 @@ class MixedSplitter:
             else:
                 return gain.max()
 
-    # Calculate the impurity of a node
     def __impurity_node(self, y):
+        # Calculate the impurity of a node
         delta = 0.0001
         impurity = np.zeros(self.n_targets)
         # Calculate the impurity value for each of the targets(classification or regression)

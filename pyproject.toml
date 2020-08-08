@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "decision-tree-morfist"
-version = "0.1.5"
+version = "0.2.0"
 description = "Multi-target Random Forest implementation that can mix both classification and regression tasks."
 authors = ["Andrés Reverón Molina <andres@reveronmolina.me>", "Henrik Linusson <henrik.linusson@hb.se>"]
 license = "MIT"
@@ -26,5 +26,5 @@ scipy = "^1.5.2"
 [tool.poetry.dev-dependencies]
 scikit-learn = "^0.23.1"
 setuptools = "^49.2.0"
-pytest = "^5.4.3"
+pytest = "^6.0.1"
 

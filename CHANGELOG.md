@@ -1,3 +1,8 @@
+## 0.2.0
+
+- Added Random Information Gain.
+- Small speed improvements.
+
 ## 0.1.5
 
 - New import syntax.

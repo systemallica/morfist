@@ -53,8 +53,8 @@ def get_gain(imp_n_left, imp_n_right, imp_n, imp_root, n_left, n_right, n_parent
 
 
 def get_max_features(max_features, n_features):
-    n_max_features = n_features
     # Maximum number of features to try for the best split
+    n_max_features = n_features
     if max_features == 'sqrt':
         n_max_features = int(np.sqrt(n_features))
     elif max_features == 'log2':
@@ -132,7 +132,6 @@ class MixedSplitter:
 
             # Try to split with this specific combination of feature and values
             # Here lies the computational burden, as we try every possible split
-            # TODO incrementally compute impurity
             for value in values:
 
                 left_idx = x[:, feature] <= value
@@ -164,6 +163,8 @@ class MixedSplitter:
 
             if self.choose_split == 'mean':
                 return gain.mean()
+            elif self.choose_split == 'random':
+                return np.random.choice(gain)
             else:
                 return gain.max()
 

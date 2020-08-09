@@ -117,30 +117,21 @@ class MixedSplitter:
             # Get the unique possible values for this particular feature
             values = np.unique(x[:, feature])
 
-            # We ensure that there are at least 2 different values
+            # Split value selection(random value subsampling): Boström (2011)
+            #   Two random feature values are selected, and a split is attempted at their mean
             if values.size < 2:
                 continue
-
-            # Random value sub-sampling
-            # Reduces the size by one element
-            # This is to avoid using the first value in case it is 0 for regression
-            # [0] -> ([0] + [1]) / 2
             values = (values[:-1] + values[1:]) / 2
+            value = np.random.choice(values)
 
-            # Choose a random amount of values, with a min of 2
-            values = np.random.choice(values, min(2, values.size))
+            # Try to split with this specific combination of feature and value
+            left_idx = x[:, feature] <= value
+            right_idx = x[:, feature] > value
 
-            # Try to split with this specific combination of feature and values
-            # Here lies the computational burden, as we try every possible split
-            for value in values:
-
-                left_idx = x[:, feature] <= value
-                right_idx = x[:, feature] > value
-
-                impurity = self.__impurity_split(y, y[left_idx, :], y[right_idx, :])
-                # If it's better than the previous saved one, save the values
-                if impurity > best_impurity:
-                    best_feature, best_value, best_impurity = feature, value, impurity
+            impurity = self.__impurity_split(y, y[left_idx, :], y[right_idx, :])
+            # If it's better than the previous saved one, save the values
+            if impurity > best_impurity:
+                best_feature, best_value, best_impurity = feature, value, impurity
 
         return best_feature, best_value, best_impurity
 

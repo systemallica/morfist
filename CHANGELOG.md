@@ -1,3 +1,8 @@
+## 0.3.0
+
+- Fixed split value selection(random value subsampling, Boström (2011)) to speed up the algorithm.
+- Refactored tests.
+
 ## 0.2.0
 
 - Added Random Information Gain.

@@ -5,7 +5,7 @@ from sklearn.datasets import load_boston, load_breast_cancer
 from sklearn.ensemble import RandomForestRegressor, RandomForestClassifier
 from sklearn.model_selection import cross_val_score
 
-from algo.evaluation import cross_validation
+from morfist.algo.evaluation import cross_validation
 from morfist import MixedRandomForest
 
 # Configuration
@@ -29,7 +29,8 @@ def test_classification():
     cls_morfist = MixedRandomForest(
         n_estimators=n_trees,
         min_samples_leaf=1,
-        classification_targets=[0]
+        classification_targets=[0],
+        choose_split='max',
     )
 
     # Calculate morfist scores using cross-validation
@@ -41,7 +42,8 @@ def test_classification():
         folds=n_folds
     )
     t1_stop = perf_counter()
-    print("Elapsed time morfist cls:", t1_stop - t1_start)
+    time = t1_stop - t1_start
+    print("Elapsed time morfist cls:", time)
 
     t2_start = perf_counter()
     # Fit scikit classification tree
@@ -56,20 +58,21 @@ def test_classification():
     )
 
     t2_stop = perf_counter()
-    print("Elapsed time scikit cls:", t2_stop - t2_start)
+    time = t2_stop - t2_start
+    print("Elapsed time scikit cls:", time)
 
     print('Classification: ')
-    print('\tmorfist (accuracy): {}'.format(morfist_scores.mean()))
-    print('\tscikit-learn (accuracy): {}'.format(scikit_scores.mean()))
+    print('\tmorfist (accuracy):', morfist_scores.mean())
+    print('\tscikit-learn (accuracy):', scikit_scores.mean())
 
 
-# Test morfist against scikit-learn for a regression task
 def test_reg():
     # Fit morfist regression tree
     t1_start = perf_counter()
     reg_morfist = MixedRandomForest(
         n_estimators=n_trees,
-        min_samples_leaf=1
+        min_samples_leaf=1,
+        choose_split='random'
     )
 
     # Calculate morfist scores using cross-validation
@@ -80,7 +83,8 @@ def test_reg():
         folds=n_folds
     )
     t1_stop = perf_counter()
-    print("Elapsed time morfist reg:", t1_stop - t1_start)
+    time = t1_stop - t1_start
+    print("Elapsed time morfist reg:", time)
 
     t2_start = perf_counter()
 
@@ -97,11 +101,12 @@ def test_reg():
     )
 
     t2_stop = perf_counter()
-    print("Elapsed time scikit reg:", t2_stop - t2_start)
+    time = t2_stop - t2_start
+    print("Elapsed time scikit reg:", time)
 
     print('Regression: ')
-    print('\tmorfist (rmse): {}'.format(scores_morfist.mean()))
-    print('\tscikit-learn (rmse): {}'.format(np.sqrt(-scores_scikit.mean())))
+    print('\tmorfist (rmse):', scores_morfist.mean())
+    print('\tscikit-learn (rmse):', np.sqrt(-scores_scikit.mean()))
 
 
 # Test morfist with a given joint task
@@ -113,7 +118,8 @@ def test_mix_1():
     mix_rf = MixedRandomForest(
         n_estimators=n_trees,
         min_samples_leaf=1,
-        classification_targets=[1]
+        classification_targets=[1],
+        choose_split='max'
     )
 
     mix_scores = cross_validation(
@@ -124,10 +130,11 @@ def test_mix_1():
         classification_targets=[1]
     )
     t1_stop = perf_counter()
-    print("Elapsed time morfist mix:", t1_stop - t1_start)
+    time = t1_stop - t1_start
+    print("Elapsed time morfist mix:", time)
     print('Mixed output: ')
-    print('\ttask 1 (original) (rmse): {}'.format(mix_scores[0]))
-    print('\ttask 2 (additional) (accuracy): {}'.format(mix_scores[1]))
+    print('\ttask 1 (original) (rmse):', mix_scores[0])
+    print('\ttask 2 (additional) (accuracy)', mix_scores[1])
 
 
 # Test morfist with a given joint task (2)
@@ -139,7 +146,8 @@ def test_mix_2():
     mix_rf = MixedRandomForest(
         n_estimators=n_trees,
         min_samples_leaf=1,
-        classification_targets=[0]
+        classification_targets=[0],
+        choose_split='max'
     )
 
     mix_scores = cross_validation(
@@ -150,18 +158,8 @@ def test_mix_2():
         classification_targets=[0]
     )
     t2_stop = perf_counter()
-
-    print("Elapsed time morfist mix 2:", t2_stop - t2_start)
+    time = t2_stop - t2_start
+    print("Elapsed time morfist mix 2:", time)
     print('Mixed output: ')
-    print('\ttask 1 (original) (accuracy): {}'.format(mix_scores[0]))
-    print('\ttask 2 (additional) (rmse): {}'.format(mix_scores[1]))
-
-
-if __name__ == '__main__':
-    test_classification()
-    print('')
-    test_reg()
-    print('')
-    test_mix_1()
-    print('')
-    test_mix_2()
+    print('\ttask 1 (original) (accuracy):', mix_scores[0])
+    print('\ttask 2 (additional) (rmse):', mix_scores[1])

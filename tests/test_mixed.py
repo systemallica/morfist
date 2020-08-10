@@ -11,11 +11,8 @@ from morfist import MixedRandomForest
 n_trees = 11
 # Cross-validation folds
 n_folds = 10
-
 # Original data
-# With categorical variables
 x_regression, y_regression = load_boston(return_X_y=True)
-# With numerical variables
 x_classification, y_classification = load_breast_cancer(return_X_y=True)
 
 

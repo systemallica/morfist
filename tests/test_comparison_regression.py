@@ -13,15 +13,12 @@ from morfist import MixedRandomForest, MixedRandomForestLegacy, cross_validation
 n_trees = 11
 # Cross-validation folds
 n_folds = 10
-
 # Original data
 x_regression, y_regression = load_boston(return_X_y=True)
 
 
-# Test morfist against scikit-learn for a classification task
-def test_classification_scikit():
+def setup_regression_scikit():
     t_start = perf_counter()
-    # Fit scikit classification tree
     # Fit scikit regression tree
     reg_scikit = RandomForestRegressor(n_estimators=n_trees)
 
@@ -36,11 +33,11 @@ def test_classification_scikit():
 
     t_stop = perf_counter()
     time = t_stop - t_start
-    print("Elapsed time scikit cls:", time)
-    print('\tscikit-learn (rmse):', np.sqrt(-scores_scikit.mean()))
+    print('scikit-learn (rmse):', np.sqrt(-scores_scikit.mean()))
+    return time
 
 
-def test_classification_morfist():
+def setup_regression_morfist():
     t_start = perf_counter()
 
     reg_morfist = MixedRandomForest(
@@ -58,11 +55,11 @@ def test_classification_morfist():
     )
     t_stop = perf_counter()
     time = t_stop - t_start
-    print("Elapsed time morfist cls:", time)
-    print('\tmorfist (rmse):', scores_morfist.mean())
+    print('morfist (rmse):', scores_morfist.mean())
+    return time
 
 
-def test_classification_morfist_legacy():
+def setup_regression_morfist_legacy():
     t_start = perf_counter()
 
     reg_morfist = MixedRandomForestLegacy(
@@ -80,5 +77,20 @@ def test_classification_morfist_legacy():
     )
     t_stop = perf_counter()
     time = t_stop - t_start
-    print("Elapsed time morfist legacy cls:", time)
-    print('\tmorfist (rmse):', scores_morfist.mean())
+    print('morfist legacy (rmse):', scores_morfist.mean())
+    return time
+
+
+def test_regression():
+    time_sci = setup_regression_scikit()
+    print("time_scikit", time_sci)
+    time_morfist = setup_regression_morfist()
+    print("time morfist", time_morfist)
+    time_morfist_legacy = setup_regression_morfist_legacy()
+    print("time morfist legacy", time_morfist_legacy)
+
+    assert time_sci < 0.5
+    assert time_morfist < 8
+    assert time_morfist_legacy < 45
+
+    assert time_morfist < time_morfist_legacy

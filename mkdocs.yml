@@ -1,0 +1,61 @@
+# Project information
+site_name: 'morfist'
+site_description: 'Documentation website for morfist'
+site_author: 'Andrés Reverón Molina'
+
+# Repository
+repo_name: 'systemallica/morfist'
+repo_url: 'https://github.com/systemallica/morfist'
+
+# Copyright
+copyright: 'Copyright &copy; 2020 Andrés Reverón Molina'
+
+# Configuration
+theme:
+  name: 'material'
+  language: 'en'
+  palette:
+    primary: 'indigo'
+    accent: 'indigo'
+  font:
+    text: 'Roboto'
+    code: 'Roboto Mono'
+
+# Customization
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/systemallica
+    - icon: fontawesome/solid/paper-plane
+      link: mailto:<andres@reveronmolina.me>
+  manifest: 'manifest.webmanifest'
+
+# Extensions
+markdown_extensions:
+  - admonition
+  - codehilite:
+      guess_lang: false
+  - toc:
+      permalink: true
+  - pymdownx.arithmatex
+  - pymdownx.betterem:
+      smart_enable: all
+  - pymdownx.caret
+  - pymdownx.critic
+  - pymdownx.details
+  - pymdownx.emoji:
+      emoji_generator: !!python/name:pymdownx.emoji.to_svg
+  - pymdownx.inlinehilite
+  - pymdownx.magiclink
+  - pymdownx.mark
+  - pymdownx.smartsymbols
+  - pymdownx.superfences
+  - pymdownx.tasklist:
+      custom_checkbox: true
+  - pymdownx.tilde
+
+# To make mathjax work you also need this
+extra_javascript:
+  - 'https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.0/MathJax.js?config=TeX-MML-AM_CHTML'
+
+  

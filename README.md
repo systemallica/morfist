@@ -32,33 +32,8 @@ mrf = MixedRandomForest(
     classification_targets=[0]
 )
 ```
-- The available parameters are:
-    - **n_estimators(int)**: the number of trees in the forest. Optional. Default value: 10.
-    
-    - **max_features(int | float | str)**: the number of features to consider when looking for the best split. Optional. Default value: 'sqrt'.
-        - If int, then consider max_features features at each split.
-        - If float, then max_features is a fraction and int(max_features * n_features) features are considered at each split.
-        - If “sqrt”, then max_features=sqrt(n_features) (same as “auto”).
-        - If “log2”, then max_features=log2(n_features).
-        - If None, then max_features=n_features.
-    
-        Note: the search for a split does not stop until at least one valid partition of the node samples is found, even if it requires to effectively inspect more than max_features features.
-    
-    - **min_samples_leaf(int)**: the minimum number of samples required to be at a leaf node. Optional. Default value: 5.
-    
-        Note: A split point at any depth will only be considered if it leaves at least min_samples_leaf training samples in each of the left and right branches. This may have the effect of smoothing the model, especially in regression.
-        
-    - **choose_split(str)**: method used to find the best split. Optional. Default value: 'mean'.
-    
-        By default, the mean information gain will be used.
-        
-        - Possible values:
-            - 'mean': the mean information gain is used.
-            - 'max': the maximum information gain is used.
-        
-    - **classification_targets(int[])**: features that are part of the classification task. Optional. Default value: None.
-    
-        If no classification_targets are specified, the random forest will treat all variables as regression variables.
+
+For more info on the possible parameters, visit the [documentation](https://systemallica.github.io/morfist/).
 
 ### Training the model
 

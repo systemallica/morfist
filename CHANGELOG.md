@@ -1,3 +1,9 @@
+## 0.3.1
+
+- Fixed README.
+- Added back legacy code for benchmarking.
+- Updated dependencies.
+
 ## 0.3.0
 
 - Fixed split value selection(random value subsampling, Boström (2011)) to speed up the algorithm.

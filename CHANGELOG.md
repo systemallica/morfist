@@ -1,3 +1,7 @@
+## 0.3.3
+
+-Fixed rare bug in `prediction_proba`.
+
 ## 0.3.2
 
 -Fixed detection of classification targets.

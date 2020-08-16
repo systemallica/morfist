@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "decision-tree-morfist"
-version = "0.3.2"
+version = "0.3.3"
 description = "Multi-target Random Forest implementation that can mix both classification and regression tasks."
 authors = ["Andrés Reverón Molina <andres@reveronmolina.me>", "Henrik Linusson <henrik.linusson@hb.se>"]
 license = "MIT"

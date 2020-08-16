@@ -101,7 +101,16 @@ class MixedRandomForest:
                 for j in range(n_test):
                     freq = np.bincount(pred[j, i, :].T.astype(int),
                                        minlength=self.classification_labels[i].size)
-                    pred_avg[j, i] = freq / self.n_estimators
+
+                    # Fix for a weird bug TODO: find the root cause
+                    if len(freq) > self.classification_labels[i].size:
+                        freq_fixed = np.zeros(self.classification_labels[i].size)
+                        for x in range(len(self.classification_labels[i])):
+                            idx = int(self.classification_labels[i][x])
+                            freq_fixed[x] = freq[idx]
+                        pred_avg[j, i] = freq_fixed / self.n_estimators
+                    else:
+                        pred_avg[j, i] = freq / self.n_estimators
             else:
                 pred_avg[:, i] = pred[:, i, :].mean(axis=1)
 

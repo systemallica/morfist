@@ -1,3 +1,7 @@
+## 0.3.2
+
+-Fixed detection of classification targets.
+
 ## 0.3.1
 
 - Fixed README.

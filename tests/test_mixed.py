@@ -75,9 +75,11 @@ def test_mix_2():
     mix_rf = MixedRandomForest(
         n_estimators=n_trees,
         min_samples_leaf=1,
-        classification_targets=[0],
+        classification_targets=np.array([0]),
         choose_split='mean'
     )
+
+    assert mix_rf.classification_targets is not []
 
     mix_scores = cross_validation(
         mix_rf,

@@ -35,7 +35,7 @@ def cross_validation(model,
                  0: classification accuracy
                  1: regression RMSE
     """
-    classification_targets = classification_targets if classification_targets else []
+    classification_targets = classification_targets if classification_targets is not None else []
 
     idx = np.random.permutation(x.shape[0])
     fold_size = int(idx.size / folds)

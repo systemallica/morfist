@@ -87,7 +87,7 @@ class MixedSplitter:
         self.n_train = x.shape[0]
         self.n_features = x.shape[1]
         self.n_targets = y.shape[1]
-        self.classification_targets = classification_targets if classification_targets else []
+        self.classification_targets = classification_targets if classification_targets is not None else []
         self.max_features = get_max_features(max_features, self.n_features)
         self.min_samples_leaf = min_samples_leaf
         self.root_impurity = self.__impurity_node(y)

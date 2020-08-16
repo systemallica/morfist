@@ -18,7 +18,7 @@ class MixedRandomTree:
         """
         self.min_samples_leaf = min_samples_leaf
         self.max_features = max_features
-        self.classification_targets = classification_targets if classification_targets else []
+        self.classification_targets = classification_targets if classification_targets is not None else []
         self.choose_split = choose_split
         self.n_targets = 0
         self.features = []

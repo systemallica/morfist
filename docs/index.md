@@ -80,3 +80,10 @@ mrf = MixedRandomForest(
     ```
     mrf.predict_proba(x)
     ```
+  
+## Run/Build locally
+To run the project, you need [Poetry](https://python-poetry.org). Once installed:
+
+1. Clone the repository.
+2. Run `poetry install`.
+3. The development environment is ready. You can test it by running `pytest`.

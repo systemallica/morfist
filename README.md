@@ -53,7 +53,14 @@ For more info on the possible parameters, visit the [documentation](https://syst
     - Probability:
     ```
     mrf.predict_proba(x)
-    ```
-  
+    ``` 
+ 
+## Run/Build locally
+To run the project, you need [Poetry](https://python-poetry.org). Once installed:
+
+1. Clone the repository.
+2. Run `poetry install`.
+3. The development environment is ready. You can test it by running `pytest`.
+
 ## TODO:
 * Speed up the learning algorithm implementation (morfist is currently **much** slower than the Random Forest implementation available in scikit-learn) 

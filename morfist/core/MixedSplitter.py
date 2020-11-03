@@ -55,9 +55,9 @@ def get_gain(imp_n_left, imp_n_right, imp_n, imp_root, n_left, n_right, n_parent
 def get_max_features(max_features, n_features):
     # Maximum number of features to try for the best split
     n_max_features = n_features
-    if max_features == 'sqrt':
+    if max_features == "sqrt":
         n_max_features = int(np.sqrt(n_features))
-    elif max_features == 'log2':
+    elif max_features == "log2":
         n_max_features = int(np.log2(n_features))
     elif isinstance(max_features, float):
         n_max_features = int(max_features * n_features)
@@ -68,13 +68,15 @@ def get_max_features(max_features, n_features):
 
 
 class MixedSplitter:
-    def __init__(self,
-                 x,
-                 y,
-                 max_features='sqrt',
-                 min_samples_leaf=5,
-                 choose_split='mean',
-                 classification_targets=None):
+    def __init__(
+        self,
+        x,
+        y,
+        max_features="sqrt",
+        min_samples_leaf=5,
+        choose_split="mean",
+        classification_targets=None,
+    ):
         """Class in charge of finding the best split at every given moment
 
         :param x: training data
@@ -87,7 +89,9 @@ class MixedSplitter:
         self.n_train = x.shape[0]
         self.n_features = x.shape[1]
         self.n_targets = y.shape[1]
-        self.classification_targets = classification_targets if classification_targets is not None else []
+        self.classification_targets = (
+            classification_targets if classification_targets is not None else []
+        )
         self.max_features = get_max_features(max_features, self.n_features)
         self.min_samples_leaf = min_samples_leaf
         self.root_impurity = self.__impurity_node(y)
@@ -107,9 +111,7 @@ class MixedSplitter:
 
         # Random selection of the features to try for the best split
         try_features = np.random.choice(
-            np.arange(self.n_features),
-            self.max_features,
-            replace=False
+            np.arange(self.n_features), self.max_features, replace=False
         )
 
         # Try each of the selected features and find which of them gives the best split(higher impurity)
@@ -144,17 +146,19 @@ class MixedSplitter:
         else:
             n_parent = y_parent.shape[0]
 
-            gain = get_gain(self.__impurity_node(y_left),
-                            self.__impurity_node(y_right),
-                            self.__impurity_node(y_parent),
-                            self.root_impurity,
-                            n_left,
-                            n_right,
-                            n_parent)
+            gain = get_gain(
+                self.__impurity_node(y_left),
+                self.__impurity_node(y_right),
+                self.__impurity_node(y_parent),
+                self.root_impurity,
+                n_left,
+                n_right,
+                n_parent,
+            )
 
-            if self.choose_split == 'mean':
+            if self.choose_split == "mean":
                 return gain.mean()
-            elif self.choose_split == 'random':
+            elif self.choose_split == "random":
                 return np.random.choice(gain)
             else:
                 return gain.max()

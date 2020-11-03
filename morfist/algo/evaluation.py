@@ -13,14 +13,16 @@ def rmse(y, y_hat):
     return np.sqrt(((y - y_hat) ** 2).mean())
 
 
-def cross_validation(model,
-                     x,
-                     y,
-                     folds=10,
-                     classification_targets=None,
-                     classification_eval=accuracy,
-                     reg_eval=rmse,
-                     verbose=False):
+def cross_validation(
+    model,
+    x,
+    y,
+    folds=10,
+    classification_targets=None,
+    classification_eval=accuracy,
+    reg_eval=rmse,
+    verbose=False,
+):
     """Perform cross validation on a model
 
     :param model:  model to be validated
@@ -35,7 +37,9 @@ def cross_validation(model,
                  0: classification accuracy
                  1: regression RMSE
     """
-    classification_targets = classification_targets if classification_targets is not None else []
+    classification_targets = (
+        classification_targets if classification_targets is not None else []
+    )
 
     idx = np.random.permutation(x.shape[0])
     fold_size = int(idx.size / folds)
@@ -49,7 +53,7 @@ def cross_validation(model,
     # Train and fit the model for different subsets of the data
     for i in range(folds):
         if verbose:
-            print('Running fold {} of {} ...'.format(i + 1, folds))
+            print("Running fold {} of {} ...".format(i + 1, folds))
 
         fold_start = i * fold_size
         fold_stop = min((i + 1) * fold_size, idx.size)

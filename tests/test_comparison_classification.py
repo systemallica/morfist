@@ -6,7 +6,6 @@ from sklearn.model_selection import cross_val_score
 
 from morfist import MixedRandomForest, MixedRandomForestLegacy, cross_validation
 
-
 # Configuration
 # Number of tress of the random forest
 n_trees = 11
@@ -23,15 +22,12 @@ def setup_classification_scikit():
 
     # Calculate scikit scores using cross-validation
     scores_scikit = cross_val_score(
-        cls_scikit,
-        x_classification,
-        y_classification,
-        cv=n_folds
+        cls_scikit, x_classification, y_classification, cv=n_folds
     )
 
     t_stop = perf_counter()
     time = t_stop - t_start
-    print('scikit-learn (accuracy):', scores_scikit.mean())
+    print("scikit-learn (accuracy):", scores_scikit.mean())
     return time
 
 
@@ -42,7 +38,7 @@ def setup_classification_morfist():
         n_estimators=n_trees,
         min_samples_leaf=1,
         classification_targets=[0],
-        choose_split='mean',
+        choose_split="mean",
     )
 
     # Calculate morfist scores using cross-validation
@@ -51,11 +47,11 @@ def setup_classification_morfist():
         x_classification,
         y_classification,
         classification_targets=[0],
-        folds=n_folds
+        folds=n_folds,
     )
     t_stop = perf_counter()
     time = t_stop - t_start
-    print('morfist (accuracy):', morfist_scores.mean())
+    print("morfist (accuracy):", morfist_scores.mean())
     return time
 
 
@@ -66,7 +62,7 @@ def setup_classification_morfist_legacy():
         n_estimators=n_trees,
         min_samples_leaf=1,
         class_targets=[0],
-        choose_split='mean',
+        choose_split="mean",
     )
 
     # Calculate morfist scores using cross-validation
@@ -75,11 +71,11 @@ def setup_classification_morfist_legacy():
         x_classification,
         y_classification,
         classification_targets=[0],
-        folds=n_folds
+        folds=n_folds,
     )
     t_stop = perf_counter()
     time = t_stop - t_start
-    print('morfist legacy (accuracy):', morfist_scores.mean())
+    print("morfist legacy (accuracy):", morfist_scores.mean())
     return time
 
 

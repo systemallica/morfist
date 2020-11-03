@@ -3,13 +3,15 @@ import scipy.stats
 
 
 class MixedSplitter(object):
-    def __init__(self,
-                 x,
-                 y,
-                 max_features='sqrt',
-                 min_samples_leaf=5,
-                 choose_split='mean',
-                 class_targets=None):
+    def __init__(
+        self,
+        x,
+        y,
+        max_features="sqrt",
+        min_samples_leaf=5,
+        choose_split="mean",
+        class_targets=None,
+    ):
         self.n_train = x.shape[0]
         self.n_features = x.shape[1]
         self.n_targets = y.shape[1]
@@ -20,7 +22,7 @@ class MixedSplitter(object):
         self.choose_split = choose_split
 
     def split(self, x, y):
-        if self.max_features == 'sqrt':
+        if self.max_features == "sqrt":
             self.max_features = int(np.ceil(np.sqrt(self.n_features)))
 
         return self.__find_best_split(x, y)
@@ -34,9 +36,7 @@ class MixedSplitter(object):
         best_imp = -np.inf
 
         try_features = np.random.choice(
-            np.arange(self.n_features),
-            self.max_features,
-            replace=False
+            np.arange(self.n_features), self.max_features, replace=False
         )
 
         for f in try_features:
@@ -46,7 +46,7 @@ class MixedSplitter(object):
 
             values = (values[:-1] + values[1:]) / 2
 
-            #random value subsampling
+            # random value subsampling
             values = np.random.choice(values, min(2, values.size))
             for v in values:
                 imp = self.__try_split(x, y, f, v)
@@ -104,20 +104,22 @@ class MixedSplitter(object):
             gain_right = (n_right / n_parent) * (imp_parent - imp_right)
             gain = gain_left + gain_right
 
-            #imp = (imp_left + imp_right) / imp_parent
+            # imp = (imp_left + imp_right) / imp_parent
 
-            if self.choose_split == 'mean':
+            if self.choose_split == "mean":
                 return gain.mean()
             else:
                 return gain.max()
 
 
 class MixedRandomTree(object):
-    def __init__(self,
-                 max_features='sqrt',
-                 min_samples_leaf=5,
-                 choose_split='mean',
-                 class_targets=None):
+    def __init__(
+        self,
+        max_features="sqrt",
+        min_samples_leaf=5,
+        choose_split="mean",
+        class_targets=None,
+    ):
         self.min_samples_leaf = min_samples_leaf
         self.max_features = max_features
         self.class_targets = class_targets if class_targets else []
@@ -129,12 +131,14 @@ class MixedRandomTree(object):
 
         self.n_targets = y.shape[1]
 
-        self.splitter = MixedSplitter(x,
-                                      y,
-                                      self.max_features,
-                                      self.min_samples_leaf,
-                                      self.choose_split,
-                                      self.class_targets)
+        self.splitter = MixedSplitter(
+            x,
+            y,
+            self.max_features,
+            self.min_samples_leaf,
+            self.choose_split,
+            self.class_targets,
+        )
 
         split_f = []
         split_t = []
@@ -210,21 +214,24 @@ class MixedRandomTree(object):
     def print(self):
         def print_l(level, i):
             if self.f[i]:
-                print('\t' * level + '[{} <= {}]:'.format(self.f[i], self.t[i]))
+                print("\t" * level + "[{} <= {}]:".format(self.f[i], self.t[i]))
                 print_l(level + 1, self.l[i])
                 print_l(level + 1, self.r[i])
             else:
-                print('\t' * level + str(self.v[i]) + ' ({})'.format(self.n[i]))
+                print("\t" * level + str(self.v[i]) + " ({})".format(self.n[i]))
 
         print_l(0, 0)
 
+
 class MixedRandomForestLegacy(object):
-    def __init__(self,
-                 n_estimators=10,
-                 max_features='sqrt',
-                 min_samples_leaf=5,
-                 choose_split='mean',
-                 class_targets=None):
+    def __init__(
+        self,
+        n_estimators=10,
+        max_features="sqrt",
+        min_samples_leaf=5,
+        choose_split="mean",
+        class_targets=None,
+    ):
         self.n_estimators = n_estimators
         self.min_samples_leaf = min_samples_leaf
         self.max_features = max_features
@@ -244,13 +251,13 @@ class MixedRandomForestLegacy(object):
 
         n_train = x.shape[0]
         for i in range(self.n_estimators):
-            m = MixedRandomTree(self.max_features,
-                                self.min_samples_leaf,
-                                self.choose_split,
-                                self.class_targets)
-            sample_idx = np.random.choice(np.arange(n_train),
-                                          n_train,
-                                          replace=True)
+            m = MixedRandomTree(
+                self.max_features,
+                self.min_samples_leaf,
+                self.choose_split,
+                self.class_targets,
+            )
+            sample_idx = np.random.choice(np.arange(n_train), n_train, replace=True)
 
             m.fit(x[sample_idx, :], y[sample_idx, :])
             self.estimators.append(m)
@@ -265,7 +272,7 @@ class MixedRandomForestLegacy(object):
         for i in range(self.n_targets):
             if i in self.class_targets:
                 pred_avg[:, i], _ = scipy.stats.mode(pred[:, i, :].T)
-            #pred_avg[:, i] = np.argmax(np.bincount(pred[:, i, :]))
+            # pred_avg[:, i] = np.argmax(np.bincount(pred[:, i, :]))
             else:
                 pred_avg[:, i] = pred[:, i, :].mean(axis=1)
 
@@ -281,8 +288,9 @@ class MixedRandomForestLegacy(object):
         for i in range(self.n_targets):
             if i in self.class_targets:
                 for j in range(n_test):
-                    freq = np.bincount(pred[j, i, :].T.astype(int),
-                                       minlength=self.class_labels[i].size)
+                    freq = np.bincount(
+                        pred[j, i, :].T.astype(int), minlength=self.class_labels[i].size
+                    )
                     pred_avg[j, i] = freq / self.n_estimators
             else:
                 pred_avg[:, i] = pred[:, i, :].mean(axis=1)
@@ -293,17 +301,21 @@ class MixedRandomForestLegacy(object):
 def acc(y, y_hat):
     return (y.astype(int) == y_hat.astype(int)).sum() / y.size
 
+
 def rmse(y, y_hat):
     return np.sqrt(((y - y_hat) ** 2).mean())
 
-def cross_validation(model,
-                     x,
-                     y,
-                     folds=10,
-                     class_targets=None,
-                     class_eval=acc,
-                     reg_eval=rmse,
-                     verbose=False):
+
+def cross_validation(
+    model,
+    x,
+    y,
+    folds=10,
+    class_targets=None,
+    class_eval=acc,
+    reg_eval=rmse,
+    verbose=False,
+):
     import copy
 
     class_targets = class_targets if class_targets else []
@@ -318,7 +330,7 @@ def cross_validation(model,
 
     for i in range(folds):
         if verbose:
-            print('Running fold {} of {} ...'.format(i + 1, folds))
+            print("Running fold {} of {} ...".format(i + 1, folds))
 
         fold_start = i * fold_size
         fold_stop = min((i + 1) * fold_size, idx.size)

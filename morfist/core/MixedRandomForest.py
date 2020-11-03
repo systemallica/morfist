@@ -18,12 +18,14 @@ class MixedRandomForest:
             i += 1
         return self.__class__.__name__ + params
 
-    def __init__(self,
-                 n_estimators=10,
-                 max_features='sqrt',
-                 min_samples_leaf=5,
-                 choose_split='mean',
-                 classification_targets=None):
+    def __init__(
+        self,
+        n_estimators=10,
+        max_features="sqrt",
+        min_samples_leaf=5,
+        choose_split="mean",
+        classification_targets=None,
+    ):
         """Build a printable Random Forest model
 
         :param n_estimators: number of trees in the forest
@@ -35,7 +37,9 @@ class MixedRandomForest:
         self.n_estimators = n_estimators
         self.min_samples_leaf = min_samples_leaf
         self.max_features = max_features
-        self.classification_targets = classification_targets if classification_targets is not None else []
+        self.classification_targets = (
+            classification_targets if classification_targets is not None else []
+        )
         self.choose_split = choose_split
         self.n_targets = 0
         self.classification_labels = {}
@@ -51,21 +55,23 @@ class MixedRandomForest:
 
         # Get the classification labels
         # It takes the unique labels of the specified classification variables
-        for i in filter(lambda j: j in self.classification_targets, range(self.n_targets)):
+        for i in filter(
+            lambda j: j in self.classification_targets, range(self.n_targets)
+        ):
             self.classification_labels[i] = np.unique(y[:, i])
 
         n_train = x.shape[0]
         # Train the random trees that are part of the forest
         for i in range(self.n_estimators):
-            m = MixedRandomTree(self.max_features,
-                                self.min_samples_leaf,
-                                self.choose_split,
-                                self.classification_targets)
+            m = MixedRandomTree(
+                self.max_features,
+                self.min_samples_leaf,
+                self.choose_split,
+                self.classification_targets,
+            )
 
             # It is a random forest so the trees are built with random subsets of the data
-            sample_idx = np.random.choice(np.arange(n_train),
-                                          n_train,
-                                          replace=True)
+            sample_idx = np.random.choice(np.arange(n_train), n_train, replace=True)
 
             m.fit(x[sample_idx, :], y[sample_idx, :])
             self.estimators.append(m)
@@ -99,8 +105,10 @@ class MixedRandomForest:
         for i in range(self.n_targets):
             if i in self.classification_targets:
                 for j in range(n_test):
-                    freq = np.bincount(pred[j, i, :].T.astype(int),
-                                       minlength=self.classification_labels[i].size)
+                    freq = np.bincount(
+                        pred[j, i, :].T.astype(int),
+                        minlength=self.classification_labels[i].size,
+                    )
 
                     # Fix for a weird bug TODO: find the root cause
                     if len(freq) > self.classification_labels[i].size:

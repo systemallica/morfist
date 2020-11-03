@@ -4,11 +4,13 @@ from morfist.core.MixedSplitter import MixedSplitter
 
 
 class MixedRandomTree:
-    def __init__(self,
-                 max_features='sqrt',
-                 min_samples_leaf=5,
-                 choose_split='mean',
-                 classification_targets=None):
+    def __init__(
+        self,
+        max_features="sqrt",
+        min_samples_leaf=5,
+        choose_split="mean",
+        classification_targets=None,
+    ):
         """Build a Random Tree
 
         :param max_features: the number of features to consider when looking for the best split
@@ -18,7 +20,9 @@ class MixedRandomTree:
         """
         self.min_samples_leaf = min_samples_leaf
         self.max_features = max_features
-        self.classification_targets = classification_targets if classification_targets is not None else []
+        self.classification_targets = (
+            classification_targets if classification_targets is not None else []
+        )
         self.choose_split = choose_split
         self.n_targets = 0
         self.features = []
@@ -34,12 +38,14 @@ class MixedRandomTree:
 
         self.n_targets = y.shape[1]
 
-        splitter = MixedSplitter(x,
-                                 y,
-                                 self.max_features,
-                                 self.min_samples_leaf,
-                                 self.choose_split,
-                                 self.classification_targets)
+        splitter = MixedSplitter(
+            x,
+            y,
+            self.max_features,
+            self.min_samples_leaf,
+            self.choose_split,
+            self.classification_targets,
+        )
 
         split_features = []
         split_values = []
@@ -103,11 +109,23 @@ class MixedRandomTree:
             if not self.features[node_idx]:
                 prediction[test_idx, :] = self.leaf_values[node_idx]
             else:
-                left_idx = x_traverse[:, self.features[node_idx]] <= self.values[node_idx]
-                right_idx = x_traverse[:, self.features[node_idx]] > self.values[node_idx]
+                left_idx = (
+                    x_traverse[:, self.features[node_idx]] <= self.values[node_idx]
+                )
+                right_idx = (
+                    x_traverse[:, self.features[node_idx]] > self.values[node_idx]
+                )
 
-                traverse(x_traverse[left_idx, :], test_idx[left_idx], self.left_children[node_idx])
-                traverse(x_traverse[right_idx, :], test_idx[right_idx], self.right_children[node_idx])
+                traverse(
+                    x_traverse[left_idx, :],
+                    test_idx[left_idx],
+                    self.left_children[node_idx],
+                )
+                traverse(
+                    x_traverse[right_idx, :],
+                    test_idx[right_idx],
+                    self.right_children[node_idx],
+                )
 
         traverse(x, np.arange(n_test), 0)
         return prediction
@@ -115,10 +133,15 @@ class MixedRandomTree:
     def print(self):
         def print_level(level, i):
             if self.features[i]:
-                print('\t' * level + '[{} <= {}]:'.format(self.features[i], self.values[i]))
+                print(
+                    "\t" * level
+                    + "[{} <= {}]:".format(self.features[i], self.values[i])
+                )
                 print_level(level + 1, self.left_children[i])
                 print_level(level + 1, self.right_children[i])
             else:
-                print('\t' * level + str(self.leaf_values[i]) + ' ({})'.format(self.n[i]))
+                print(
+                    "\t" * level + str(self.leaf_values[i]) + " ({})".format(self.n[i])
+                )
 
         print_level(0, 0)

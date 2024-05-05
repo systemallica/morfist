@@ -8,7 +8,7 @@ repo_name: 'systemallica/morfist'
 repo_url: 'https://github.com/systemallica/morfist'
 
 # Copyright
-copyright: 'Copyright &copy; 2020 Andrés Reverón Molina'
+copyright: 'Copyright &copy; 2024 Andrés Reverón Molina'
 
 # Configuration
 theme:

@@ -1,9 +1,9 @@
 from time import perf_counter
 
 import numpy as np
-from sklearn.datasets import load_boston
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.model_selection import cross_val_score
+from sklearn.datasets import fetch_california_housing
 
 from morfist import MixedRandomForest, MixedRandomForestLegacy, cross_validation
 
@@ -13,7 +13,7 @@ n_trees = 11
 # Cross-validation folds
 n_folds = 10
 # Original data
-x_regression, y_regression = load_boston(return_X_y=True)
+x_regression, y_regression = fetch_california_housing(return_X_y=True)
 
 
 def setup_regression_scikit():

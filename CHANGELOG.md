@@ -1,10 +1,14 @@
+## 0.4.0
+
+- Add support for python 3.10, 3.11 and 3.12
+
 ## 0.3.3
 
--Fixed rare bug in `prediction_proba`.
+- Fixed rare bug in `prediction_proba`.
 
 ## 0.3.2
 
--Fixed detection of classification targets.
+- Fixed detection of classification targets.
 
 ## 0.3.1
 

@@ -1,1 +1,0 @@
-from morfist.legacy import *
